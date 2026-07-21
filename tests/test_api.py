@@ -102,3 +102,42 @@ def test_passenger_requests_retrieval_seat_mismatch():
     response = client.get("/passenger/requests?seat=11A", headers=get_passenger_headers("22A"))
     assert response.status_code == 403
 
+
+def test_events_endpoint_unauthenticated():
+    # Missing token query parameter
+    response = client.get("/events")
+    assert response.status_code == 401
+
+    # Invalid token query parameter
+    response = client.get("/events?token=invalid_token_123")
+    assert response.status_code == 401
+
+
+def test_events_endpoint_authenticated(monkeypatch):
+    # Valid passenger token
+    auth_resp = client.post("/auth/passenger", json={"seat": "22A", "booking_reference": "DEMO"})
+    assert auth_resp.status_code == 200
+    token = auth_resp.json()["token"]
+
+    import asyncio
+    class MockQueue:
+        def __init__(self):
+            self.yielded = False
+        async def get(self):
+            if not self.yielded:
+                self.yielded = True
+                return {"topic": "test"}
+            raise asyncio.CancelledError()
+
+    monkeypatch.setattr("backend.main.event_manager.subscribe", lambda: MockQueue())
+    monkeypatch.setattr("backend.main.event_manager.unsubscribe", lambda q: None)
+
+    # Now we can do a synchronous request and read the full stream content
+    response = client.get(f"/events?token={token}")
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers.get("content-type", "")
+    assert "connected" in response.text
+    assert "test" in response.text
+
+
+

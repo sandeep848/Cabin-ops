@@ -1,12 +1,16 @@
 # FastAPI API server for the CabinOps AI application. Imported directly as the entry point in deployment/start scripts.
 import json
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, Security, status, File, UploadFile, Query, Request
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
+
+from backend.services.event_manager import event_manager
 
 from backend.security import (
     generate_token,
@@ -117,6 +121,37 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/events")
+async def events_endpoint(token: str | None = Query(None)):
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is missing"
+        )
+    token_data = verify_token(token)
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token"
+        )
+
+    async def event_generator():
+        queue = event_manager.subscribe()
+        try:
+            yield f"data: {json.dumps({'status': 'connected'})}\n\n"
+            while True:
+                message = await queue.get()
+                data = json.dumps(message) if isinstance(message, (dict, list)) else str(message)
+                yield f"data: {data}\n\n"
+        except asyncio.CancelledError:
+            logger.info("SSE connection cancelled/client disconnected")
+            raise
+        finally:
+            event_manager.unsubscribe(queue)
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
 
 @app.post("/auth/crew")
 def auth_crew(payload: CrewAuth, _ = Depends(auth_limiter)) -> dict:
@@ -163,11 +198,12 @@ def get_flight_context(flight_id: str = "APX-001") -> dict:
         raise HTTPException(status_code=500, detail="Internal server error retrieving flight context")
 
 @app.post("/flight-context")
-def update_flight_context(payload: FlightContext, token_data: dict = Depends(require_crew)) -> dict:
+async def update_flight_context(payload: FlightContext, token_data: dict = Depends(require_crew)) -> dict:
     try:
         flight_id = token_data.get("flight_id") or (token_data.get("permitted_flights", ["APX-001"])[0] if token_data.get("permitted_flights") else "APX-001")
         ctx_dict = payload.model_dump()
         update_db_flight_context(ctx_dict, flight_id)
+        await event_manager.broadcast({"topic": "flight_context", "action": "update"})
         return {"status": "success", "flight_context": ctx_dict}
     except Exception as exc:
         logger.error(f"Error updating flight context: {exc}", exc_info=True)
@@ -175,7 +211,7 @@ def update_flight_context(payload: FlightContext, token_data: dict = Depends(req
 
 # Passenger Request Ingress
 @app.post("/request", response_model=ParsedRequest)
-def create_request(
+async def create_request(
     payload: PassengerRequest,
     _ = Depends(request_limiter),
     token_data: dict = Depends(require_role(["passenger"]))
@@ -245,6 +281,7 @@ def create_request(
             flight_id=flight_id,
         )
 
+    await event_manager.broadcast({"topic": "tasks", "action": "update"})
     return parsed
 
 # Passenger Specific Requests Retrieval
@@ -322,10 +359,11 @@ def analytics_summary(token_data: dict = Depends(require_crew)) -> dict:
         raise HTTPException(status_code=500, detail="Internal server error calculating analytics")
 
 @app.post("/crew/tasks/clear")
-def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
+async def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
     try:
         from backend.database import clear_all_tasks
         clear_all_tasks()
+        await event_manager.broadcast({"topic": "tasks", "action": "update"})
         return {"status": "success", "message": "All passenger requests cleared and inventory reset."}
     except Exception as exc:
         logger.error(f"Error clearing tasks: {exc}", exc_info=True)
@@ -333,12 +371,13 @@ def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
 
 # Task State Transitions
 @app.post("/crew/tasks/{task_id}/accept")
-def accept_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
+async def accept_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
     try:
         permitted = token_data.get("permitted_flights", [])
         success = update_task_status(task_id, "accepted", permitted_flights=permitted)
         if not success:
             raise HTTPException(status_code=404, detail="Task not found or unable to accept")
+        await event_manager.broadcast({"topic": "tasks", "action": "update"})
         return {"status": "success", "message": f"Task {task_id} accepted"}
     except HTTPException:
         raise
@@ -351,12 +390,13 @@ def accept_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
         raise HTTPException(status_code=500, detail="Internal server error updating task status")
 
 @app.post("/crew/tasks/{task_id}/complete")
-def complete_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
+async def complete_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
     try:
         permitted = token_data.get("permitted_flights", [])
         success = update_task_status(task_id, "completed", permitted_flights=permitted)
         if not success:
             raise HTTPException(status_code=404, detail="Task not found or unable to complete")
+        await event_manager.broadcast({"topic": "tasks", "action": "update"})
         return {"status": "success", "message": f"Task {task_id} completed"}
     except HTTPException:
         raise
@@ -370,7 +410,7 @@ def complete_task(task_id: int, token_data: dict = Depends(require_crew)) -> dic
 
 # POST Announcement - Crew Only
 @app.post("/announcements")
-def post_announcement(
+async def post_announcement(
     payload: Announcement,
     token_data: dict = Depends(require_crew)
 ) -> dict:
@@ -385,6 +425,7 @@ def post_announcement(
             timestamp=timestamp,
             flight_id=flight_id
         )
+        await event_manager.broadcast({"topic": "announcements", "action": "update"})
         return {"status": "success", "id": ann_id, "timestamp": timestamp}
     except Exception as exc:
         logger.error(f"Error posting announcement: {exc}", exc_info=True)
