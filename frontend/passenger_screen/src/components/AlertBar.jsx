@@ -16,9 +16,9 @@ export default function AlertBar({ seatbelt_sign, flight_phase, hasEmergency }) 
             <IconWarning size={14} />
           </span>
           <span className="alert-bar-text">
-            {seatbelt_sign
-              ? 'Please fasten your seatbelt — cabin services are temporarily suspended.'
-              : `Services are suspended during ${phaseLabel}. Please remain seated.`}
+            {restrictedPhases.includes(flight_phase)
+              ? `Services are suspended during ${phaseLabel}. Please remain seated.`
+              : 'Please fasten your seatbelt — cabin services are temporarily suspended.'}
           </span>
         </div>
         {hasEmergency && (

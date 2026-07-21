@@ -22,6 +22,7 @@ export default function App() {
   /* Auth */
   const [token,         setToken]         = useState(sessionStorage.getItem('crew_token') || null);
   const [role,          setRole]           = useState(sessionStorage.getItem('crew_role')  || null);
+  const [flightId,      setFlightId]       = useState(sessionStorage.getItem('crew_flight_id') || '');
   const [username,      setUsername]       = useState('');
   const [password,      setPassword]       = useState('');
   const [loginError,    setLoginError]     = useState(null);
@@ -53,8 +54,10 @@ export default function App() {
   const handleLogout = useCallback(() => {
     sessionStorage.removeItem('crew_token');
     sessionStorage.removeItem('crew_role');
+    sessionStorage.removeItem('crew_flight_id');
     setToken(null);
     setRole(null);
+    setFlightId('');
     setTasks([]);
     setAnalytics({ total_tasks: 0, urgent_tasks: 0, by_zone: {} });
     setInventory([]);
@@ -70,33 +73,33 @@ export default function App() {
   const fetchTasks = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API}/api/crew/tasks`, { headers: authHeaders() });
+      const res = await fetch(`${API}/api/crew/tasks?flight_id=${encodeURIComponent(flightId)}`, { headers: authHeaders() });
       if (res.status === 401) { handleLogout(); return; }
       if (res.ok) setTasks(await res.json());
     } catch (err) {
       console.error('Failed to fetch attendant tasks:', err);
     }
-  }, [token, authHeaders, handleLogout]);
+  }, [token, flightId, authHeaders, handleLogout]);
 
   const fetchAnalytics = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API}/api/analytics/summary`, { headers: authHeaders() });
+      const res = await fetch(`${API}/api/analytics/summary?flight_id=${encodeURIComponent(flightId)}`, { headers: authHeaders() });
       if (res.status === 401) { handleLogout(); return; }
       if (res.ok) setAnalytics(await res.json());
     } catch (err) {
       console.error('Failed to fetch analytics summary:', err);
     }
-  }, [token, authHeaders, handleLogout]);
+  }, [token, flightId, authHeaders, handleLogout]);
 
   const fetchFlightContext = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/flight-context`);
+      const res = await fetch(`${API}/api/flight-context?flight_id=${encodeURIComponent(flightId)}`);
       if (res.ok) setFlightContext(await res.json());
     } catch (err) {
       console.error('Failed to fetch flight context:', err);
     }
-  }, []);
+  }, [flightId]);
 
   const fetchInventory = useCallback(async () => {
     if (!token) return;
@@ -111,12 +114,12 @@ export default function App() {
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/announcements`);
+      const res = await fetch(`${API}/api/announcements?flight_id=${encodeURIComponent(flightId)}`);
       if (res.ok) setAnnouncements(await res.json());
     } catch (err) {
       console.error('Failed to fetch announcements:', err);
     }
-  }, []);
+  }, [flightId]);
 
   const fetchData = useCallback(async (tok) => {
     const t = tok || token;
@@ -214,8 +217,10 @@ export default function App() {
       const data = await res.json();
       sessionStorage.setItem('crew_token', data.token);
       sessionStorage.setItem('crew_role',  data.role);
+      sessionStorage.setItem('crew_flight_id', data.flight_id);
       setToken(data.token);
       setRole(data.role);
+      setFlightId(data.flight_id);
     } catch {
       setLoginError('Connection failed. Check that the server is running.');
     } finally {

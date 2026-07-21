@@ -11,7 +11,8 @@ INTENT_PATTERNS = [
     ("medical_assistance", [
         r"\bdizzy\b", r"\bsick\b", r"\bfaint\b", r"\bdoctor\b", r"\bmedical\b",
         r"\bchest\s+pain\b", r"\bpain\b", r"\bnauseous\b", r"\bpassed\s+out\b",
-        r"\bhurt\b", r"\bbleeding\b", r"\bmedication\b", r"\bmedicine\b"
+        r"\bhurt\b", r"\bbleeding\b", r"\bmedication\b", r"\bmedicine\b",
+        r"\bbreath\w*", r"\bchok\w*", r"\bsuffocat\w*", r"\bheart\w*", r"\bseiz\w*", r"\bunconscious\b"
     ], 0.90, "high", "urgent_pending", "Medical Alert: Flight attendant dispatch required."),
     
     ("allergy_question", [

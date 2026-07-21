@@ -27,6 +27,7 @@ export default function App() {
   const [bookingRef, setBookingRef] = useState('');
   const [token, setToken] = useState(sessionStorage.getItem('passenger_token') || null);
   const [authedSeat, setAuthedSeat] = useState(sessionStorage.getItem('passenger_seat') || '');
+  const [flightId, setFlightId] = useState(sessionStorage.getItem('passenger_flight_id') || '');
   const [loginError, setLoginError] = useState(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -87,14 +88,16 @@ export default function App() {
   const handleAuthError = useCallback(() => {
     sessionStorage.removeItem('passenger_token');
     sessionStorage.removeItem('passenger_seat');
+    sessionStorage.removeItem('passenger_flight_id');
     setToken(null);
     setAuthedSeat('');
+    setFlightId('');
   }, []);
 
   const fetchPassengerRequests = useCallback(async () => {
     if (!token) return;
     try {
-      const reqRes = await fetch(`${API_BASE}/api/passenger/requests?seat=${encodeURIComponent(authedSeat)}`, {
+      const reqRes = await fetch(`${API_BASE}/api/passenger/requests?seat=${encodeURIComponent(authedSeat)}&flight_id=${encodeURIComponent(flightId)}`, {
         headers: authHeaders(),
       });
       if (reqRes.status === 401) { handleAuthError(); return; }
@@ -105,11 +108,11 @@ export default function App() {
     } catch (err) {
       console.error('Failed to fetch passenger requests:', err);
     }
-  }, [token, authedSeat, authHeaders, handleAuthError]);
+  }, [token, authedSeat, flightId, authHeaders, handleAuthError]);
 
   const fetchFlightContext = useCallback(async () => {
     try {
-      const ctxRes = await fetch(`${API_BASE}/api/flight-context`);
+      const ctxRes = await fetch(`${API_BASE}/api/flight-context?flight_id=${encodeURIComponent(flightId)}`);
       if (ctxRes.ok) {
         const data = await ctxRes.json();
         setFlightContext((prev) => ({ ...prev, ...data }));
@@ -117,11 +120,11 @@ export default function App() {
     } catch (err) {
       console.error('Failed to fetch flight context:', err);
     }
-  }, []);
+  }, [flightId]);
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const annRes = await fetch(`${API_BASE}/api/announcements`);
+      const annRes = await fetch(`${API_BASE}/api/announcements?flight_id=${encodeURIComponent(flightId)}`);
       if (annRes.ok) {
         const data = await annRes.json();
         setAnnouncements(Array.isArray(data) ? data : []);
@@ -129,7 +132,7 @@ export default function App() {
     } catch (err) {
       console.error('Failed to fetch announcements:', err);
     }
-  }, []);
+  }, [flightId]);
 
   const fetchData = useCallback(async () => {
     if (!token) return;
@@ -235,9 +238,11 @@ export default function App() {
       const data = await res.json();
       sessionStorage.setItem('passenger_token', data.token);
       sessionStorage.setItem('passenger_seat', trimmedSeat);
+      sessionStorage.setItem('passenger_flight_id', data.flight_id);
       setToken(data.token);
       setAuthedSeat(trimmedSeat);
       setBookingRef(trimmedRef);
+      setFlightId(data.flight_id);
       setRequestsLoading(true);
     } catch {
       setLoginError('Could not connect to the server. Please try again.');
@@ -273,9 +278,11 @@ export default function App() {
       const data = await res.json();
       sessionStorage.setItem('passenger_token', data.token);
       sessionStorage.setItem('passenger_seat', s);
+      sessionStorage.setItem('passenger_flight_id', data.flight_id);
       setToken(data.token);
       setAuthedSeat(s);
       setBookingRef(r);
+      setFlightId(data.flight_id);
       setShowSeatPicker(false);
       setMyRequests([]);
       setRequestsLoading(true);

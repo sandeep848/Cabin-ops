@@ -172,24 +172,40 @@ def auth_crew(payload: CrewAuth, _ = Depends(auth_limiter)) -> dict:
         )
         
     role = user["role"]
-    token = generate_token({"role": role, "username": username, "permitted_flights": ["APX-001"]})
-    return {"status": "success", "token": token, "role": role}
+    permitted_flights = ["APX-001"]
+    flight_id = permitted_flights[0]
+    token = generate_token({"role": role, "username": username, "permitted_flights": permitted_flights})
+    return {"status": "success", "token": token, "role": role, "flight_id": flight_id}
 
 @app.post("/auth/passenger")
 def auth_passenger(payload: PassengerAuth, _ = Depends(auth_limiter)) -> dict:
     seat = payload.seat
     booking_ref = payload.booking_reference
     
-    from backend.database import verify_booking
-    
-    if booking_ref.upper() == "DEMO" or verify_booking(seat, booking_ref):
-        token = generate_token({"role": "passenger", "seat": seat.upper(), "flight_id": "APX-001"})
-        return {"status": "success", "token": token, "role": "passenger"}
+    flight_id = None
+    if booking_ref.upper() == "DEMO":
+        flight_id = "APX-001"
+    else:
+        from backend.database.connection import get_connection
+        import hmac
+        with get_connection() as conn:
+            rows = conn.execute(
+                "SELECT flight_id, booking_reference FROM bookings WHERE seat = ?",
+                (seat.upper(),)
+            ).fetchall()
+            for r in rows:
+                if hmac.compare_digest(r["booking_reference"].upper().encode("utf-8"), booking_ref.upper().encode("utf-8")):
+                    flight_id = r["flight_id"]
+                    break
+                    
+    if not flight_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid seat or booking reference. Try booking reference 'DEMO'."
+        )
         
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid seat or booking reference. Try booking reference 'DEMO'."
-    )
+    token = generate_token({"role": "passenger", "seat": seat.upper(), "flight_id": flight_id})
+    return {"status": "success", "token": token, "role": "passenger", "flight_id": flight_id}
 
 # Flight Context Endpoints
 @app.get("/flight-context", response_model=FlightContext)
@@ -225,7 +241,7 @@ async def create_request(
             detail=f"Seat mismatch: token is for seat {token_data.get('seat')}, but request is for {payload.seat}"
         )
     parsed = parse_request(payload.text, payload.seat)
-    flight_id = "APX-001"
+    flight_id = token_data.get("flight_id", "APX-001")
     
     try:
         flight_context = get_db_flight_context(flight_id)
@@ -302,8 +318,9 @@ def get_passenger_requests(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Seat mismatch: token is for seat {token_data.get('seat')}, but requested seat is {seat}"
         )
+    actual_flight_id = token_data.get("flight_id", flight_id)
     try:
-        return list_tasks(seat=seat, flight_id=flight_id)
+        return list_tasks(seat=seat, flight_id=actual_flight_id)
     except Exception as exc:
         logger.error(f"Error fetching passenger requests: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error fetching your requests")
