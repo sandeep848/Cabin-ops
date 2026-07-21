@@ -6,6 +6,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, Security, status, File, UploadFile, Query, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,6 +47,7 @@ from backend.services.flight_rules import apply_flight_rules
 from backend.services.intent_parser import parse_request
 from backend.services.inventory import reserve_item, suggest_alternative
 from backend.services.speech_to_text import transcribe_audio_stub
+from backend.services.router import seat_to_zone
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -81,6 +83,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="CabinOps AI Prototype", lifespan=lifespan)
+app.mount("/project-docs", StaticFiles(directory="docs"), name="project-docs")
 
 # Environment CORS settings
 origins_str = os.getenv("CORS_ALLOWED_ORIGINS", "")
@@ -270,16 +273,19 @@ async def create_request(
             logger.error(f"Unable to retrieve announcements: {e}", exc_info=True)
             parsed["action"] = "Unable to retrieve announcements due to a server error."
 
-    if parsed["crew_required"] and parsed["assigned_zone"]:
-        insert_task(
-            seat=parsed["seat"],
-            zone=parsed["assigned_zone"],
-            intent=parsed["intent"],
-            urgency=parsed["urgency"],
-            status=parsed["status"],
-            action=parsed["action"],
-            flight_id=flight_id,
-        )
+    zone = parsed["assigned_zone"]
+    if not zone:
+        zone = seat_to_zone(payload.seat)
+
+    insert_task(
+        seat=parsed["seat"],
+        zone=zone,
+        intent=parsed["intent"],
+        urgency=parsed["urgency"],
+        status=parsed["status"],
+        action=parsed["action"],
+        flight_id=flight_id,
+    )
 
     await event_manager.broadcast({"topic": "tasks", "action": "update"})
     return parsed

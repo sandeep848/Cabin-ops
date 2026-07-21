@@ -76,7 +76,7 @@ export default function Cabin3DView({ tasks, flightContext, onSeatSelect }) {
   }, [tasks]);
 
   return (
-    <div style={{ width: '100%', height: '400px', background: '#111827', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ width: '100%', height: '400px', background: 'rgba(5, 8, 14, 0.45)', border: '1px solid rgba(99, 102, 241, 0.12)', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, color: 'white', background: 'rgba(0,0,0,0.5)', padding: '8px', borderRadius: '8px' }}>
         <h3 style={{ margin: 0, fontSize: '14px' }}>Flight Phase: {flightContext?.flight_phase || 'Unknown'}</h3>
         <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>Active Requests: {tasks.filter(t => t.status !== 'completed').length}</p>

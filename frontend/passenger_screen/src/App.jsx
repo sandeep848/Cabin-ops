@@ -64,6 +64,8 @@ export default function App() {
   const recordingTimerRef = useRef(null);
   const transcribeRef = useRef(null);
   const textareaRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const [useSimulation, setUseSimulation] = useState(false);
 
   // ─────────────────────────────────────────
   // DERIVED
@@ -344,7 +346,26 @@ export default function App() {
     setRecordingSeconds(0);
     clearInterval(recordingTimerRef.current);
     clearTimeout(transcribeRef.current);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
   }, []);
+
+  const startSimulation = () => {
+    setIsRecording(true);
+    setRecordingSeconds(0);
+    setAssistantReply(null);
+    setSubmitError(null);
+    setVoiceError(false);
+    clearInterval(recordingTimerRef.current);
+    recordingTimerRef.current = setInterval(() => {
+      setRecordingSeconds((s) => s + 1);
+    }, 1000);
+  };
 
   const handleMicClick = () => {
     if (voiceError) {
@@ -354,50 +375,123 @@ export default function App() {
     if (isTranscribing) return;
 
     if (isRecording) {
-      clearInterval(recordingTimerRef.current);
-      setIsRecording(false);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      } else {
+        clearInterval(recordingTimerRef.current);
+        setIsRecording(false);
 
-      // Short press simulation produces a voice error
-      if (recordingSeconds < 1) {
-        setVoiceError(true);
-        setRecordingSeconds(0);
-        return;
-      }
-
-      setRecordingSeconds(0);
-      setIsTranscribing(true);
-
-      const phrase = VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)];
-      let idx = 0;
-      setRequestText('');
-
-      const typeChar = () => {
-        idx++;
-        setRequestText(phrase.slice(0, idx));
-        if (idx < phrase.length) {
-          transcribeRef.current = setTimeout(typeChar, 35);
-        } else {
-          setIsTranscribing(false);
+        // Short press simulation produces a voice error
+        if (recordingSeconds < 1) {
+          setVoiceError(true);
+          setRecordingSeconds(0);
+          return;
         }
-      };
-      transcribeRef.current = setTimeout(typeChar, 35);
+
+        setRecordingSeconds(0);
+        setIsTranscribing(true);
+
+        const phrase = VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)];
+        let idx = 0;
+        setRequestText('');
+
+        const typeChar = () => {
+          idx++;
+          setRequestText(phrase.slice(0, idx));
+          if (idx < phrase.length) {
+            transcribeRef.current = setTimeout(typeChar, 35);
+          } else {
+            setIsTranscribing(false);
+          }
+        };
+        transcribeRef.current = setTimeout(typeChar, 35);
+      }
     } else {
-      setIsRecording(true);
-      setRecordingSeconds(0);
-      setAssistantReply(null);
-      setSubmitError(null);
-      setVoiceError(false);
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingSeconds((s) => s + 1);
-      }, 1000);
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (useSimulation || !SpeechRecognition) {
+        startSimulation();
+      } else {
+        try {
+          const rec = new SpeechRecognition();
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.lang = 'en-US';
+
+          rec.onstart = () => {
+            setIsRecording(true);
+            setRecordingSeconds(0);
+            setAssistantReply(null);
+            setSubmitError(null);
+            setVoiceError(false);
+            clearInterval(recordingTimerRef.current);
+            recordingTimerRef.current = setInterval(() => {
+              setRecordingSeconds((s) => s + 1);
+            }, 1000);
+          };
+
+          rec.onresult = (event) => {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+            if (finalTranscript) {
+              setRequestText(finalTranscript);
+            }
+          };
+
+          rec.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            if (event.error === 'not-allowed') {
+              setUseSimulation(true);
+              if (recognitionRef.current) {
+                try {
+                  recognitionRef.current.onend = null;
+                  recognitionRef.current.stop();
+                } catch (e) {}
+                recognitionRef.current = null;
+              }
+              startSimulation();
+            } else {
+              setVoiceError(true);
+              setIsRecording(false);
+              clearInterval(recordingTimerRef.current);
+              recognitionRef.current = null;
+            }
+          };
+
+          rec.onend = () => {
+            setIsRecording(false);
+            clearInterval(recordingTimerRef.current);
+            recognitionRef.current = null;
+          };
+
+          recognitionRef.current = rec;
+          rec.start();
+        } catch (err) {
+          console.error('Failed to start SpeechRecognition:', err);
+          setUseSimulation(true);
+          startSimulation();
+        }
+      }
     }
   };
 
-  // Cleanup on unmount
+  // Cleanup on unmount & SpeechRecognition initialisation
   useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setUseSimulation(true);
+    }
     return () => {
       clearInterval(recordingTimerRef.current);
       clearTimeout(transcribeRef.current);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
     };
   }, []);
 

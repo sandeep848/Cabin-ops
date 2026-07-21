@@ -337,23 +337,8 @@ export default function App() {
   const activeTasks   = useMemo(() => tasks.filter((t) => ACTIVE_STATUSES.has(t.status)), [tasks, ACTIVE_STATUSES]);
   const resolvedTasks = useMemo(() => tasks.filter((t) => RESOLVED_STATUSES.has(t.status)), [tasks, RESOLVED_STATUSES]);
 
-  /* Deduplicate: group by seat+intent for pending/urgent_pending */
   const groupedActive = useMemo(() => {
-    const map = new Map();
-    const order = [];
-    for (const task of activeTasks) {
-      const canGroup = task.status === 'pending' || task.status === 'urgent_pending';
-      const key = canGroup ? `${task.seat}||${task.intent}` : `__solo__${task.id}`;
-      if (map.has(key)) {
-        const item = map.get(key);
-        item.count += 1;
-        item.ids.push(task.id);
-      } else {
-        map.set(key, { ...task, count: 1, ids: [task.id] });
-        order.push(key);
-      }
-    }
-    return order.map((k) => map.get(k));
+    return activeTasks;
   }, [activeTasks]);
 
   /* ── Seat → active task map ──────────── */

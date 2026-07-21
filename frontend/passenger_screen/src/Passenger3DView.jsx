@@ -47,7 +47,7 @@ function ServiceItem({ position, label, color, onClick, disabled }) {
 
 export default function Passenger3DView({ onServiceSelect, isRestricted }) {
   return (
-    <div style={{ width: '100%', height: '300px', background: '#1f2937', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', position: 'relative' }}>
+    <div style={{ width: '100%', height: '300px', background: 'rgba(5, 8, 14, 0.45)', border: '1px solid rgba(99, 102, 241, 0.12)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', position: 'relative' }}>
       <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, color: '#9ca3af', fontSize: '12px' }}>
         Interactive 3D Menu
       </div>

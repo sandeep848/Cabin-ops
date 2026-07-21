@@ -77,34 +77,6 @@ def init_announcements_db() -> None:
             )
         """)
         conn.commit()
-        
-        row = conn.execute("SELECT COUNT(*) FROM announcements").fetchone()
-        if row[0] == 0:
-            announcements_file = DATA_DIR / "announcements.json"
-            if announcements_file.exists():
-                try:
-                    data = json.loads(announcements_file.read_text(encoding="utf-8"))
-                    for item in data:
-                        ts = item.get("timestamp", "")
-                        if "minutes" in ts or "hour" in ts or "ago" in ts:
-                            if "10" in ts:
-                                ts = "2026-06-14T09:30:00Z"
-                            elif "30" in ts:
-                                ts = "2026-06-14T09:10:00Z"
-                            elif "1" in ts or "one" in ts:
-                                ts = "2026-06-14T08:40:00Z"
-                            else:
-                                ts = "2026-06-14T08:00:00Z"
-                        conn.execute(
-                            "INSERT INTO announcements (flight_id, timestamp, speaker, text) VALUES ('APX-001', ?, ?, ?)",
-                            (ts, item["speaker"], item["text"])
-                        )
-                    conn.commit()
-                    # Sync initial db data back to json
-                    from backend.database.operations import sync_announcements_json
-                    sync_announcements_json()
-                except Exception as exc:
-                    logger.error(f"Error seeding announcements: {exc}", exc_info=True)
 
 def init_users_db() -> None:
     with get_connection() as conn:
