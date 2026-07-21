@@ -1,0 +1,511 @@
+utterance_text,input_modality,seat,flight_phase,intent,urgency,crew_required,expected_action
+I feel dizzy. Can someone help?,text,22A,cruise,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,text,12C,cruise,meal_request,low,true,inventory check then crew task
+What did the captain say?,text,14D,cruise,missed_announcement,low,false,answer from announcement history
+My screen is frozen,text,25F,cruise,screen_issue,medium,true,IFE support task
+Can I have water?,text,3A,landing_preparation,water_request,low,false,delay service
+I am having chest pain,voice,10B,cruise,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,text,4E,cruise,emergency,high,true,urgent crew alert
+I have a severe peanut allergy,text,18A,cruise,allergy_question,high,true,notify crew
+Please bring me some water,quick_button,8D,cruise,water_request,low,true,crew task
+Could I get an extra blanket?,quick_button,15A,cruise,blanket_request,low,true,inventory check then crew task
+My screen is completely black and won't turn on,text,2B,cruise,screen_issue,medium,true,IFE support task
+What was the announcement about turbulence?,text,9C,cruise,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,text,12F,cruise,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,text,24B,cruise,out_of_scope,none,false,ignore request
+I feel extremely sick and need a doctor,voice,1A,cruise,medical_assistance,high,true,urgent crew alert
+There is a fire in the lavatory!,voice,30C,cruise,emergency,high,true,urgent crew alert
+Does this meal contain walnuts?,text,11D,cruise,allergy_question,high,true,notify crew
+Can I get some hot tea?,text,17F,cruise,meal_request,low,true,inventory check then crew task
+May I have a glass of water?,quick_button,28A,cruise,water_request,low,true,crew task
+I'm freezing. Can you bring a blanket?,text,22C,cruise,blanket_request,low,true,inventory check then crew task
+My screen touch is not working,text,7C,cruise,screen_issue,medium,true,IFE support task
+What did they say about the connecting flights?,text,19B,cruise,missed_announcement,low,false,answer from announcement history
+How do I book a hotel in San Francisco?,text,5A,cruise,out_of_scope,none,false,ignore request
+I am nauseous,voice,13D,cruise,medical_assistance,high,true,urgent crew alert
+Someone passed out in seat 14B!,voice,14B,cruise,medical_assistance,high,true,urgent crew alert
+Is there a fire on the wing?,voice,22F,cruise,emergency,high,true,urgent crew alert
+Does the chicken meal contain dairy?,text,23D,cruise,allergy_question,high,true,notify crew
+I want a vegetarian option please,quick_button,12A,cruise,meal_request,low,true,inventory check then crew task
+Just some water for me,quick_button,6E,cruise,water_request,low,true,crew task
+Can I get headphones?,quick_button,14A,cruise,blanket_request,low,true,inventory check then crew task
+The IFE screen is not responding,text,18E,cruise,screen_issue,medium,true,IFE support task
+Missed the captain announcement,text,20D,cruise,missed_announcement,low,false,answer from announcement history
+Can you recommend a restaurant?,text,2F,cruise,out_of_scope,none,false,ignore request
+I need a pillow and a blanket,text,3B,cruise,blanket_request,low,true,inventory check then crew task
+I need some help with my baby food,text,11F,cruise,meal_request,low,true,crew task
+I feel dizzy. Can someone help?,quick_button,6B,takeoff,medical_assistance,high,true,urgent crew alert
+Please bring me some water,text,6D,takeoff,water_request,low,false,delay service
+My screen is frozen,quick_button,18C,cruise,screen_issue,medium,true,IFE support task
+My screen is completely black,voice,12D,cruise,screen_issue,medium,true,IFE support task
+My screen is frozen,quick_button,12C,landing,screen_issue,medium,true,IFE support task
+Can I get coffee?,quick_button,20A,taxi,meal_request,low,false,delay service
+Is there smoke coming from the overhead bin?,quick_button,30A,cruise,emergency,high,true,urgent crew alert
+I feel dizzy. Can someone help?,voice,5D,landing,medical_assistance,high,true,urgent crew alert
+What was the announcement about turbulence?,voice,26C,landing,missed_announcement,low,false,answer from announcement history
+Can I have water?,text,2B,landing,water_request,low,false,delay service
+Is there smoke coming from the overhead bin?,text,24B,taxi,emergency,high,true,urgent crew alert
+I am having chest pain,voice,18D,takeoff,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,quick_button,13B,boarding,meal_request,low,false,delay service
+Is there smoke coming from the overhead bin?,quick_button,24B,takeoff,emergency,high,true,urgent crew alert
+Can I buy a ticket for the train?,quick_button,20A,taxi,out_of_scope,none,false,ignore request
+I am having chest pain,quick_button,14C,takeoff,medical_assistance,high,true,urgent crew alert
+My screen is completely black,voice,2E,boarding,screen_issue,medium,true,IFE support task
+Can I get coffee?,voice,11E,boarding,meal_request,low,false,delay service
+Can I buy a ticket for the train?,voice,5C,cruise,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,quick_button,12F,landing_preparation,allergy_question,high,true,notify crew
+Could I get an extra blanket?,voice,27A,takeoff,blanket_request,low,false,delay service
+I have a severe peanut allergy,quick_button,9D,takeoff,allergy_question,high,true,notify crew
+Can I have water?,text,14B,cruise,water_request,low,true,crew task
+Please bring me some water,voice,13F,landing,water_request,low,false,delay service
+Can I have water?,text,27E,landing,water_request,low,false,delay service
+Can I get coffee?,quick_button,20A,cruise,meal_request,low,true,inventory check then crew task
+I have a severe peanut allergy,voice,13E,taxi,allergy_question,high,true,notify crew
+I feel dizzy. Can someone help?,voice,5E,taxi,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,quick_button,1A,landing_preparation,allergy_question,high,true,notify crew
+Is there smoke coming from the overhead bin?,quick_button,4A,boarding,emergency,high,true,urgent crew alert
+Could I get an extra blanket?,quick_button,27B,cruise,blanket_request,low,true,inventory check then crew task
+Can I get coffee?,voice,7D,cruise,meal_request,low,true,inventory check then crew task
+Could I get an extra blanket?,quick_button,25D,boarding,blanket_request,low,false,delay service
+What is the weather in Paris?,text,5F,cruise,out_of_scope,none,false,ignore request
+What did the captain say?,text,25A,landing_preparation,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,voice,29F,taxi,out_of_scope,none,false,ignore request
+What was the announcement about turbulence?,voice,15D,boarding,missed_announcement,low,false,answer from announcement history
+Can I have water?,text,14C,landing,water_request,low,false,delay service
+Please bring me some water,quick_button,25B,landing_preparation,water_request,low,false,delay service
+Please bring me some water,text,5F,takeoff,water_request,low,false,delay service
+I feel dizzy. Can someone help?,quick_button,23A,landing,medical_assistance,high,true,urgent crew alert
+I am having chest pain,voice,2E,cruise,medical_assistance,high,true,urgent crew alert
+Please bring me some water,text,21F,cruise,water_request,low,true,crew task
+I feel dizzy. Can someone help?,quick_button,4E,landing_preparation,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,text,6E,takeoff,allergy_question,high,true,notify crew
+My screen is completely black,text,3A,cruise,screen_issue,medium,true,IFE support task
+What did the captain say?,text,17E,takeoff,missed_announcement,low,false,answer from announcement history
+Could I get an extra blanket?,quick_button,13C,cruise,blanket_request,low,true,inventory check then crew task
+What was the announcement about turbulence?,text,7E,takeoff,missed_announcement,low,false,answer from announcement history
+What did the captain say?,voice,14D,boarding,missed_announcement,low,false,answer from announcement history
+What did the captain say?,text,12F,landing_preparation,missed_announcement,low,false,answer from announcement history
+Can I get coffee?,voice,8B,taxi,meal_request,low,false,delay service
+What was the announcement about turbulence?,text,28C,takeoff,missed_announcement,low,false,answer from announcement history
+What was the announcement about turbulence?,voice,7D,cruise,missed_announcement,low,false,answer from announcement history
+Please bring me some water,voice,11E,landing,water_request,low,false,delay service
+Can I have water?,voice,27D,boarding,water_request,low,false,delay service
+I have a severe peanut allergy,quick_button,23F,taxi,allergy_question,high,true,notify crew
+What did the captain say?,text,14D,cruise,missed_announcement,low,false,answer from announcement history
+My screen is completely black,voice,3A,taxi,screen_issue,medium,true,IFE support task
+I am having chest pain,voice,24F,taxi,medical_assistance,high,true,urgent crew alert
+What was the announcement about turbulence?,quick_button,13E,landing_preparation,missed_announcement,low,false,answer from announcement history
+Can I have water?,voice,27E,boarding,water_request,low,false,delay service
+My screen is frozen,text,15F,cruise,screen_issue,medium,true,IFE support task
+What is the weather in Paris?,quick_button,12B,landing_preparation,out_of_scope,none,false,ignore request
+My screen is completely black,text,21E,landing,screen_issue,medium,true,IFE support task
+Can I buy a ticket for the train?,quick_button,14B,boarding,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,voice,23B,takeoff,out_of_scope,none,false,ignore request
+I am having chest pain,voice,27E,cruise,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,voice,30A,landing_preparation,emergency,high,true,urgent crew alert
+Can I get coffee?,text,24A,boarding,meal_request,low,false,delay service
+What was the announcement about turbulence?,voice,30B,cruise,missed_announcement,low,false,answer from announcement history
+My screen is completely black,voice,18B,landing_preparation,screen_issue,medium,true,IFE support task
+Please bring me some water,voice,29F,boarding,water_request,low,false,delay service
+Can I get coffee?,voice,5D,taxi,meal_request,low,false,delay service
+Could I get an extra blanket?,text,16B,landing_preparation,blanket_request,low,false,delay service
+Can I buy a ticket for the train?,voice,8C,takeoff,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,quick_button,23F,takeoff,out_of_scope,none,false,ignore request
+I feel dizzy. Can someone help?,text,13D,landing,medical_assistance,high,true,urgent crew alert
+What did the captain say?,text,24D,boarding,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,text,7F,boarding,medical_assistance,high,true,urgent crew alert
+I am having chest pain,voice,6C,landing_preparation,medical_assistance,high,true,urgent crew alert
+Please bring me some water,voice,2F,boarding,water_request,low,false,delay service
+Can I have water?,text,25E,boarding,water_request,low,false,delay service
+Can I get coffee?,quick_button,26F,cruise,meal_request,low,true,inventory check then crew task
+My screen is completely black,quick_button,18C,takeoff,screen_issue,medium,true,IFE support task
+I have a severe peanut allergy,text,18B,takeoff,allergy_question,high,true,notify crew
+Could I get an extra blanket?,quick_button,6D,takeoff,blanket_request,low,false,delay service
+Can I get coffee?,text,11D,cruise,meal_request,low,true,inventory check then crew task
+I have a severe peanut allergy,text,5B,takeoff,allergy_question,high,true,notify crew
+Please bring me some water,text,12C,landing_preparation,water_request,low,false,delay service
+I feel dizzy. Can someone help?,voice,18E,taxi,medical_assistance,high,true,urgent crew alert
+What is the weather in Paris?,text,19D,boarding,out_of_scope,none,false,ignore request
+Is there smoke coming from the overhead bin?,voice,10A,taxi,emergency,high,true,urgent crew alert
+My screen is completely black,quick_button,27F,landing_preparation,screen_issue,medium,true,IFE support task
+Please bring me some water,voice,25B,cruise,water_request,low,true,crew task
+What did the captain say?,quick_button,2B,landing,missed_announcement,low,false,answer from announcement history
+My screen is completely black,text,29C,takeoff,screen_issue,medium,true,IFE support task
+I have a severe peanut allergy,text,17A,landing_preparation,allergy_question,high,true,notify crew
+My screen is frozen,voice,18C,landing,screen_issue,medium,true,IFE support task
+What did the captain say?,voice,25F,landing_preparation,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,text,22B,cruise,out_of_scope,none,false,ignore request
+My screen is frozen,text,27D,takeoff,screen_issue,medium,true,IFE support task
+My screen is completely black,voice,12D,takeoff,screen_issue,medium,true,IFE support task
+Can I get coffee?,quick_button,10A,taxi,meal_request,low,false,delay service
+What did the captain say?,text,12D,landing,missed_announcement,low,false,answer from announcement history
+What did the captain say?,text,6F,landing_preparation,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,voice,25A,landing_preparation,medical_assistance,high,true,urgent crew alert
+I feel dizzy. Can someone help?,text,4D,boarding,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,text,1A,landing,allergy_question,high,true,notify crew
+Can I have water?,quick_button,8E,takeoff,water_request,low,false,delay service
+My screen is completely black,text,18D,landing,screen_issue,medium,true,IFE support task
+I am having chest pain,quick_button,18D,landing,medical_assistance,high,true,urgent crew alert
+Could I get an extra blanket?,voice,30D,landing,blanket_request,low,false,delay service
+Is there smoke coming from the overhead bin?,text,24A,cruise,emergency,high,true,urgent crew alert
+Please bring me some water,voice,14A,landing_preparation,water_request,low,false,delay service
+What was the announcement about turbulence?,text,25C,landing_preparation,missed_announcement,low,false,answer from announcement history
+Please bring me some water,voice,16D,cruise,water_request,low,true,crew task
+I feel dizzy. Can someone help?,voice,25D,cruise,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,voice,25A,landing_preparation,allergy_question,high,true,notify crew
+Could I get an extra blanket?,text,2E,boarding,blanket_request,low,false,delay service
+Is there smoke coming from the overhead bin?,quick_button,5E,landing_preparation,emergency,high,true,urgent crew alert
+Please bring me some water,voice,25A,landing,water_request,low,false,delay service
+Please bring me some water,quick_button,24A,landing,water_request,low,false,delay service
+My screen is frozen,voice,2F,cruise,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,voice,20E,cruise,emergency,high,true,urgent crew alert
+Can I buy a ticket for the train?,quick_button,27E,landing,out_of_scope,none,false,ignore request
+Can I have water?,voice,6D,cruise,water_request,low,true,crew task
+Can I get coffee?,quick_button,21F,taxi,meal_request,low,false,delay service
+Can I buy a ticket for the train?,voice,14A,landing_preparation,out_of_scope,none,false,ignore request
+What is the weather in Paris?,text,3A,landing,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,quick_button,6F,boarding,allergy_question,high,true,notify crew
+Please bring me some water,quick_button,26B,landing_preparation,water_request,low,false,delay service
+What was the announcement about turbulence?,text,13A,boarding,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,voice,25F,landing_preparation,out_of_scope,none,false,ignore request
+My screen is completely black,quick_button,29F,landing,screen_issue,medium,true,IFE support task
+Can I have water?,voice,20D,boarding,water_request,low,false,delay service
+Can I have water?,quick_button,1D,landing_preparation,water_request,low,false,delay service
+Can I buy a ticket for the train?,voice,17A,takeoff,out_of_scope,none,false,ignore request
+What is the weather in Paris?,voice,26C,cruise,out_of_scope,none,false,ignore request
+I feel dizzy. Can someone help?,text,1A,landing_preparation,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,text,3D,taxi,emergency,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,voice,8B,taxi,emergency,high,true,urgent crew alert
+My screen is frozen,quick_button,19B,landing_preparation,screen_issue,medium,true,IFE support task
+I have a severe peanut allergy,text,25C,takeoff,allergy_question,high,true,notify crew
+What is the weather in Paris?,text,20D,landing,out_of_scope,none,false,ignore request
+What was the announcement about turbulence?,voice,9E,landing_preparation,missed_announcement,low,false,answer from announcement history
+Can I get coffee?,text,14B,taxi,meal_request,low,false,delay service
+Can I get coffee?,quick_button,28F,cruise,meal_request,low,true,inventory check then crew task
+Can I have water?,text,23B,cruise,water_request,low,true,crew task
+What did the captain say?,quick_button,5A,cruise,missed_announcement,low,false,answer from announcement history
+What did the captain say?,text,11D,boarding,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,text,5E,landing_preparation,medical_assistance,high,true,urgent crew alert
+My screen is completely black,text,29D,landing_preparation,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,voice,10A,landing,emergency,high,true,urgent crew alert
+I feel dizzy. Can someone help?,voice,25F,cruise,medical_assistance,high,true,urgent crew alert
+I am having chest pain,quick_button,12F,cruise,medical_assistance,high,true,urgent crew alert
+Can I have water?,quick_button,14F,landing_preparation,water_request,low,false,delay service
+Can I have water?,text,9D,landing_preparation,water_request,low,false,delay service
+I am having chest pain,quick_button,1F,takeoff,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,text,4E,landing_preparation,emergency,high,true,urgent crew alert
+Could I get an extra blanket?,voice,9E,boarding,blanket_request,low,false,delay service
+I am having chest pain,quick_button,10B,takeoff,medical_assistance,high,true,urgent crew alert
+Can I buy a ticket for the train?,voice,30B,taxi,out_of_scope,none,false,ignore request
+What was the announcement about turbulence?,quick_button,14C,landing_preparation,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,text,30B,takeoff,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,quick_button,9C,boarding,out_of_scope,none,false,ignore request
+My screen is frozen,quick_button,29A,boarding,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,text,25A,cruise,emergency,high,true,urgent crew alert
+Can I buy a ticket for the train?,text,18D,boarding,out_of_scope,none,false,ignore request
+What is the weather in Paris?,quick_button,16B,landing_preparation,out_of_scope,none,false,ignore request
+I am having chest pain,text,11B,landing,medical_assistance,high,true,urgent crew alert
+What is the weather in Paris?,text,1B,landing_preparation,out_of_scope,none,false,ignore request
+My screen is frozen,voice,22B,landing,screen_issue,medium,true,IFE support task
+My screen is completely black,voice,21E,takeoff,screen_issue,medium,true,IFE support task
+I feel dizzy. Can someone help?,text,6A,cruise,medical_assistance,high,true,urgent crew alert
+What was the announcement about turbulence?,voice,10E,takeoff,missed_announcement,low,false,answer from announcement history
+My screen is completely black,text,28B,landing,screen_issue,medium,true,IFE support task
+What did the captain say?,voice,27A,landing_preparation,missed_announcement,low,false,answer from announcement history
+What was the announcement about turbulence?,quick_button,7D,cruise,missed_announcement,low,false,answer from announcement history
+I have a severe peanut allergy,text,19A,landing_preparation,allergy_question,high,true,notify crew
+Could I get an extra blanket?,text,23D,boarding,blanket_request,low,false,delay service
+Can I buy a ticket for the train?,text,21D,landing,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,voice,18C,landing_preparation,allergy_question,high,true,notify crew
+What was the announcement about turbulence?,voice,3E,landing_preparation,missed_announcement,low,false,answer from announcement history
+Can I have water?,voice,8F,boarding,water_request,low,false,delay service
+Is there smoke coming from the overhead bin?,text,30A,cruise,emergency,high,true,urgent crew alert
+Can I buy a ticket for the train?,text,19C,cruise,out_of_scope,none,false,ignore request
+Is there smoke coming from the overhead bin?,text,26B,cruise,emergency,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,quick_button,8D,takeoff,emergency,high,true,urgent crew alert
+I feel dizzy. Can someone help?,voice,19C,landing,medical_assistance,high,true,urgent crew alert
+Please bring me some water,text,2C,landing_preparation,water_request,low,false,delay service
+Can I buy a ticket for the train?,voice,5A,takeoff,out_of_scope,none,false,ignore request
+What is the weather in Paris?,quick_button,3B,landing,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,quick_button,14E,landing_preparation,out_of_scope,none,false,ignore request
+Can I get coffee?,voice,29B,taxi,meal_request,low,false,delay service
+My screen is frozen,text,18E,takeoff,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,quick_button,4D,landing_preparation,emergency,high,true,urgent crew alert
+I have a severe peanut allergy,quick_button,11D,landing,allergy_question,high,true,notify crew
+Please bring me some water,quick_button,19C,taxi,water_request,low,false,delay service
+I feel dizzy. Can someone help?,text,24C,landing_preparation,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,quick_button,5F,cruise,emergency,high,true,urgent crew alert
+I have a severe peanut allergy,text,11D,takeoff,allergy_question,high,true,notify crew
+Please bring me some water,voice,16F,cruise,water_request,low,true,crew task
+My screen is completely black,quick_button,9E,landing,screen_issue,medium,true,IFE support task
+Can I get coffee?,text,21C,boarding,meal_request,low,false,delay service
+Could I get an extra blanket?,text,16D,landing,blanket_request,low,false,delay service
+I am having chest pain,text,7B,landing,medical_assistance,high,true,urgent crew alert
+Can I have water?,quick_button,27E,taxi,water_request,low,false,delay service
+I am having chest pain,text,3D,taxi,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,text,7B,cruise,allergy_question,high,true,notify crew
+Please bring me some water,voice,30E,cruise,water_request,low,true,crew task
+Can I get coffee?,quick_button,21A,cruise,meal_request,low,true,inventory check then crew task
+What did the captain say?,quick_button,9D,taxi,missed_announcement,low,false,answer from announcement history
+My screen is frozen,quick_button,8A,cruise,screen_issue,medium,true,IFE support task
+I am having chest pain,text,9C,takeoff,medical_assistance,high,true,urgent crew alert
+Please bring me some water,quick_button,20E,taxi,water_request,low,false,delay service
+I have a severe peanut allergy,quick_button,27A,takeoff,allergy_question,high,true,notify crew
+I feel dizzy. Can someone help?,voice,3B,takeoff,medical_assistance,high,true,urgent crew alert
+Could I get an extra blanket?,text,5A,cruise,blanket_request,low,true,inventory check then crew task
+I have a severe peanut allergy,text,30E,cruise,allergy_question,high,true,notify crew
+What was the announcement about turbulence?,voice,16A,takeoff,missed_announcement,low,false,answer from announcement history
+Is there smoke coming from the overhead bin?,voice,19B,cruise,emergency,high,true,urgent crew alert
+Please bring me some water,voice,1F,takeoff,water_request,low,false,delay service
+What is the weather in Paris?,quick_button,25A,landing_preparation,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,quick_button,1D,boarding,allergy_question,high,true,notify crew
+My screen is frozen,voice,16C,boarding,screen_issue,medium,true,IFE support task
+Please bring me some water,text,29C,takeoff,water_request,low,false,delay service
+What is the weather in Paris?,text,6D,boarding,out_of_scope,none,false,ignore request
+What is the weather in Paris?,quick_button,16F,cruise,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,quick_button,17C,boarding,allergy_question,high,true,notify crew
+Is there smoke coming from the overhead bin?,voice,6C,landing_preparation,emergency,high,true,urgent crew alert
+My screen is frozen,quick_button,30D,boarding,screen_issue,medium,true,IFE support task
+My screen is completely black,voice,27B,cruise,screen_issue,medium,true,IFE support task
+Can I have water?,quick_button,9A,takeoff,water_request,low,false,delay service
+Is there smoke coming from the overhead bin?,voice,16A,boarding,emergency,high,true,urgent crew alert
+I feel dizzy. Can someone help?,text,20A,takeoff,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,text,18D,landing_preparation,emergency,high,true,urgent crew alert
+Can I have water?,text,25E,boarding,water_request,low,false,delay service
+Can I buy a ticket for the train?,voice,4C,takeoff,out_of_scope,none,false,ignore request
+Can I get coffee?,text,19B,cruise,meal_request,low,true,inventory check then crew task
+I feel dizzy. Can someone help?,voice,9F,takeoff,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,voice,8F,taxi,meal_request,low,false,delay service
+Could I get an extra blanket?,quick_button,20B,landing_preparation,blanket_request,low,false,delay service
+Is there smoke coming from the overhead bin?,voice,8D,taxi,emergency,high,true,urgent crew alert
+My screen is completely black,voice,20D,boarding,screen_issue,medium,true,IFE support task
+Can I have water?,quick_button,21B,landing,water_request,low,false,delay service
+Can I buy a ticket for the train?,voice,12D,takeoff,out_of_scope,none,false,ignore request
+Could I get an extra blanket?,quick_button,8A,landing,blanket_request,low,false,delay service
+Can I have water?,text,27A,boarding,water_request,low,false,delay service
+I feel dizzy. Can someone help?,text,4F,landing,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,quick_button,16E,landing_preparation,emergency,high,true,urgent crew alert
+Can I buy a ticket for the train?,voice,23B,taxi,out_of_scope,none,false,ignore request
+I am having chest pain,voice,20A,taxi,medical_assistance,high,true,urgent crew alert
+My screen is completely black,quick_button,22C,boarding,screen_issue,medium,true,IFE support task
+Please bring me some water,quick_button,1F,cruise,water_request,low,true,crew task
+Is there smoke coming from the overhead bin?,text,24A,boarding,emergency,high,true,urgent crew alert
+Could I get an extra blanket?,text,8E,taxi,blanket_request,low,false,delay service
+What was the announcement about turbulence?,text,28F,landing_preparation,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,text,29C,taxi,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,quick_button,30B,cruise,meal_request,low,true,inventory check then crew task
+What is the weather in Paris?,text,29A,boarding,out_of_scope,none,false,ignore request
+Please bring me some water,voice,18C,takeoff,water_request,low,false,delay service
+What did the captain say?,text,28A,takeoff,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,text,23D,takeoff,medical_assistance,high,true,urgent crew alert
+I am having chest pain,voice,1A,cruise,medical_assistance,high,true,urgent crew alert
+I feel dizzy. Can someone help?,text,9D,takeoff,medical_assistance,high,true,urgent crew alert
+Could I get an extra blanket?,quick_button,25E,boarding,blanket_request,low,false,delay service
+I am having chest pain,quick_button,23E,taxi,medical_assistance,high,true,urgent crew alert
+My screen is completely black,text,14D,cruise,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,voice,19D,takeoff,emergency,high,true,urgent crew alert
+I feel dizzy. Can someone help?,quick_button,5C,takeoff,medical_assistance,high,true,urgent crew alert
+My screen is completely black,quick_button,1C,landing,screen_issue,medium,true,IFE support task
+I feel dizzy. Can someone help?,text,22F,landing_preparation,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,text,2F,landing,meal_request,low,false,delay service
+I feel dizzy. Can someone help?,quick_button,4B,takeoff,medical_assistance,high,true,urgent crew alert
+I feel dizzy. Can someone help?,quick_button,7E,cruise,medical_assistance,high,true,urgent crew alert
+I am having chest pain,voice,30A,taxi,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,text,3F,taxi,emergency,high,true,urgent crew alert
+What did the captain say?,quick_button,2A,taxi,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,quick_button,23C,taxi,out_of_scope,none,false,ignore request
+My screen is frozen,voice,26A,cruise,screen_issue,medium,true,IFE support task
+What was the announcement about turbulence?,voice,9E,landing,missed_announcement,low,false,answer from announcement history
+I have a severe peanut allergy,text,19E,taxi,allergy_question,high,true,notify crew
+My screen is frozen,voice,2B,boarding,screen_issue,medium,true,IFE support task
+I feel dizzy. Can someone help?,voice,21F,takeoff,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,text,20F,landing,meal_request,low,false,delay service
+Can I buy a ticket for the train?,voice,7A,cruise,out_of_scope,none,false,ignore request
+My screen is completely black,text,15E,landing_preparation,screen_issue,medium,true,IFE support task
+What did the captain say?,voice,4B,landing_preparation,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,text,10F,landing,medical_assistance,high,true,urgent crew alert
+Can I buy a ticket for the train?,voice,19A,cruise,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,voice,11C,boarding,allergy_question,high,true,notify crew
+What was the announcement about turbulence?,voice,13C,taxi,missed_announcement,low,false,answer from announcement history
+What did the captain say?,text,2D,cruise,missed_announcement,low,false,answer from announcement history
+I am having chest pain,quick_button,21F,landing,medical_assistance,high,true,urgent crew alert
+What is the weather in Paris?,quick_button,15C,takeoff,out_of_scope,none,false,ignore request
+What was the announcement about turbulence?,text,10D,boarding,missed_announcement,low,false,answer from announcement history
+Please bring me some water,text,11A,takeoff,water_request,low,false,delay service
+I have a severe peanut allergy,quick_button,26B,cruise,allergy_question,high,true,notify crew
+What was the announcement about turbulence?,text,5B,taxi,missed_announcement,low,false,answer from announcement history
+Please bring me some water,text,26E,landing,water_request,low,false,delay service
+Please bring me some water,quick_button,26D,cruise,water_request,low,true,crew task
+Can I have water?,text,15B,landing,water_request,low,false,delay service
+Can I buy a ticket for the train?,text,23A,takeoff,out_of_scope,none,false,ignore request
+My screen is completely black,voice,23B,landing_preparation,screen_issue,medium,true,IFE support task
+I have a severe peanut allergy,text,15D,cruise,allergy_question,high,true,notify crew
+I have a severe peanut allergy,voice,26D,taxi,allergy_question,high,true,notify crew
+I feel dizzy. Can someone help?,quick_button,7F,takeoff,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,text,29C,taxi,allergy_question,high,true,notify crew
+Can I get coffee?,text,3C,boarding,meal_request,low,false,delay service
+Could I get an extra blanket?,quick_button,27A,landing_preparation,blanket_request,low,false,delay service
+Can I buy a ticket for the train?,quick_button,12D,boarding,out_of_scope,none,false,ignore request
+Could I get an extra blanket?,voice,6F,boarding,blanket_request,low,false,delay service
+I am having chest pain,voice,13F,taxi,medical_assistance,high,true,urgent crew alert
+Please bring me some water,voice,3F,landing,water_request,low,false,delay service
+Can I get coffee?,quick_button,26D,landing,meal_request,low,false,delay service
+What was the announcement about turbulence?,voice,21C,cruise,missed_announcement,low,false,answer from announcement history
+My screen is frozen,voice,10E,landing,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,text,7D,boarding,emergency,high,true,urgent crew alert
+Can I get coffee?,text,12B,landing_preparation,meal_request,low,false,delay service
+Can I have water?,voice,8F,landing,water_request,low,false,delay service
+Could I get an extra blanket?,voice,19A,landing,blanket_request,low,false,delay service
+Could I get an extra blanket?,quick_button,28B,boarding,blanket_request,low,false,delay service
+What is the weather in Paris?,quick_button,12C,takeoff,out_of_scope,none,false,ignore request
+My screen is frozen,text,15C,landing,screen_issue,medium,true,IFE support task
+Can I get coffee?,text,28E,takeoff,meal_request,low,false,delay service
+I have a severe peanut allergy,quick_button,22D,boarding,allergy_question,high,true,notify crew
+Can I get coffee?,quick_button,13E,boarding,meal_request,low,false,delay service
+What is the weather in Paris?,quick_button,15D,landing_preparation,out_of_scope,none,false,ignore request
+I feel dizzy. Can someone help?,quick_button,7B,cruise,medical_assistance,high,true,urgent crew alert
+I am having chest pain,quick_button,20E,cruise,medical_assistance,high,true,urgent crew alert
+My screen is frozen,voice,9C,takeoff,screen_issue,medium,true,IFE support task
+Could I get an extra blanket?,text,12F,landing_preparation,blanket_request,low,false,delay service
+My screen is completely black,text,9B,landing_preparation,screen_issue,medium,true,IFE support task
+What did the captain say?,text,9C,cruise,missed_announcement,low,false,answer from announcement history
+What was the announcement about turbulence?,text,18B,landing,missed_announcement,low,false,answer from announcement history
+Can I get coffee?,quick_button,9E,cruise,meal_request,low,true,inventory check then crew task
+My screen is completely black,voice,13B,boarding,screen_issue,medium,true,IFE support task
+Is there smoke coming from the overhead bin?,voice,27F,takeoff,emergency,high,true,urgent crew alert
+What is the weather in Paris?,text,11E,cruise,out_of_scope,none,false,ignore request
+My screen is completely black,text,15D,landing_preparation,screen_issue,medium,true,IFE support task
+Can I get coffee?,quick_button,25F,taxi,meal_request,low,false,delay service
+I have a severe peanut allergy,quick_button,9A,cruise,allergy_question,high,true,notify crew
+What did the captain say?,voice,30C,takeoff,missed_announcement,low,false,answer from announcement history
+Could I get an extra blanket?,quick_button,14B,landing_preparation,blanket_request,low,false,delay service
+Can I have water?,text,29D,taxi,water_request,low,false,delay service
+Can I get coffee?,quick_button,22C,cruise,meal_request,low,true,inventory check then crew task
+Is there smoke coming from the overhead bin?,voice,14E,cruise,emergency,high,true,urgent crew alert
+Can I buy a ticket for the train?,voice,28E,landing_preparation,out_of_scope,none,false,ignore request
+My screen is frozen,quick_button,9D,boarding,screen_issue,medium,true,IFE support task
+Please bring me some water,voice,7C,landing,water_request,low,false,delay service
+I have a severe peanut allergy,voice,2A,boarding,allergy_question,high,true,notify crew
+Is there smoke coming from the overhead bin?,quick_button,17D,landing_preparation,emergency,high,true,urgent crew alert
+Could I get an extra blanket?,text,1B,landing_preparation,blanket_request,low,false,delay service
+Is there smoke coming from the overhead bin?,text,4D,boarding,emergency,high,true,urgent crew alert
+What is the weather in Paris?,text,4F,landing_preparation,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,quick_button,26E,landing,out_of_scope,none,false,ignore request
+Can I have water?,quick_button,11A,taxi,water_request,low,false,delay service
+Could I get an extra blanket?,quick_button,10E,landing,blanket_request,low,false,delay service
+Please bring me some water,quick_button,12E,taxi,water_request,low,false,delay service
+My screen is completely black,text,22B,takeoff,screen_issue,medium,true,IFE support task
+What did the captain say?,voice,22F,boarding,missed_announcement,low,false,answer from announcement history
+I have a severe peanut allergy,quick_button,7D,boarding,allergy_question,high,true,notify crew
+Please bring me some water,text,17C,boarding,water_request,low,false,delay service
+What did the captain say?,text,21C,landing,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,text,8C,cruise,medical_assistance,high,true,urgent crew alert
+My screen is completely black,text,20B,landing,screen_issue,medium,true,IFE support task
+Could I get an extra blanket?,text,16A,boarding,blanket_request,low,false,delay service
+My screen is frozen,voice,5E,cruise,screen_issue,medium,true,IFE support task
+Could I get an extra blanket?,text,5C,cruise,blanket_request,low,true,inventory check then crew task
+I have a severe peanut allergy,text,3F,landing_preparation,allergy_question,high,true,notify crew
+I feel dizzy. Can someone help?,quick_button,26C,taxi,medical_assistance,high,true,urgent crew alert
+What is the weather in Paris?,quick_button,25D,taxi,out_of_scope,none,false,ignore request
+I feel dizzy. Can someone help?,quick_button,17B,takeoff,medical_assistance,high,true,urgent crew alert
+What is the weather in Paris?,voice,28E,cruise,out_of_scope,none,false,ignore request
+What is the weather in Paris?,text,11E,taxi,out_of_scope,none,false,ignore request
+Please bring me some water,voice,3E,landing_preparation,water_request,low,false,delay service
+Can I get coffee?,voice,6B,taxi,meal_request,low,false,delay service
+My screen is completely black,voice,10F,takeoff,screen_issue,medium,true,IFE support task
+Can I get coffee?,text,10B,taxi,meal_request,low,false,delay service
+Can I buy a ticket for the train?,voice,20B,boarding,out_of_scope,none,false,ignore request
+Please bring me some water,text,14F,boarding,water_request,low,false,delay service
+I have a severe peanut allergy,voice,3E,landing,allergy_question,high,true,notify crew
+My screen is completely black,quick_button,19F,taxi,screen_issue,medium,true,IFE support task
+Can I buy a ticket for the train?,quick_button,24B,takeoff,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,voice,17B,landing,allergy_question,high,true,notify crew
+What was the announcement about turbulence?,quick_button,7F,takeoff,missed_announcement,low,false,answer from announcement history
+What did the captain say?,quick_button,16E,takeoff,missed_announcement,low,false,answer from announcement history
+Is there smoke coming from the overhead bin?,quick_button,28F,taxi,emergency,high,true,urgent crew alert
+What is the weather in Paris?,quick_button,10F,cruise,out_of_scope,none,false,ignore request
+My screen is completely black,text,10A,landing,screen_issue,medium,true,IFE support task
+Could I get an extra blanket?,text,19C,boarding,blanket_request,low,false,delay service
+I have a severe peanut allergy,quick_button,23E,boarding,allergy_question,high,true,notify crew
+Can I buy a ticket for the train?,voice,19F,taxi,out_of_scope,none,false,ignore request
+What is the weather in Paris?,voice,13E,cruise,out_of_scope,none,false,ignore request
+I am having chest pain,quick_button,10E,landing,medical_assistance,high,true,urgent crew alert
+Can I buy a ticket for the train?,voice,10B,cruise,out_of_scope,none,false,ignore request
+I feel dizzy. Can someone help?,quick_button,24E,boarding,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,text,1B,takeoff,allergy_question,high,true,notify crew
+My screen is frozen,voice,3D,landing_preparation,screen_issue,medium,true,IFE support task
+Can I get coffee?,text,23A,taxi,meal_request,low,false,delay service
+Could I get an extra blanket?,quick_button,4D,landing_preparation,blanket_request,low,false,delay service
+I feel dizzy. Can someone help?,quick_button,18E,taxi,medical_assistance,high,true,urgent crew alert
+Is there smoke coming from the overhead bin?,voice,6D,cruise,emergency,high,true,urgent crew alert
+My screen is completely black,quick_button,17F,landing,screen_issue,medium,true,IFE support task
+What was the announcement about turbulence?,quick_button,19E,taxi,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,voice,27B,cruise,medical_assistance,high,true,urgent crew alert
+Can I buy a ticket for the train?,quick_button,13D,landing_preparation,out_of_scope,none,false,ignore request
+Please bring me some water,text,23E,takeoff,water_request,low,false,delay service
+What is the weather in Paris?,text,30F,landing_preparation,out_of_scope,none,false,ignore request
+Is there smoke coming from the overhead bin?,voice,3C,takeoff,emergency,high,true,urgent crew alert
+I feel dizzy. Can someone help?,text,3F,cruise,medical_assistance,high,true,urgent crew alert
+My screen is completely black,quick_button,13A,cruise,screen_issue,medium,true,IFE support task
+Please bring me some water,text,30A,landing,water_request,low,false,delay service
+Can I get coffee?,quick_button,24F,landing,meal_request,low,false,delay service
+What is the weather in Paris?,quick_button,25C,takeoff,out_of_scope,none,false,ignore request
+Can I buy a ticket for the train?,quick_button,2D,landing,out_of_scope,none,false,ignore request
+Could I get an extra blanket?,quick_button,7D,landing,blanket_request,low,false,delay service
+I am having chest pain,voice,11B,taxi,medical_assistance,high,true,urgent crew alert
+Can I get coffee?,quick_button,15F,landing_preparation,meal_request,low,false,delay service
+I am having chest pain,quick_button,6D,takeoff,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,voice,8C,landing,allergy_question,high,true,notify crew
+I feel dizzy. Can someone help?,quick_button,2E,cruise,medical_assistance,high,true,urgent crew alert
+I feel dizzy. Can someone help?,voice,19E,takeoff,medical_assistance,high,true,urgent crew alert
+I have a severe peanut allergy,voice,25E,cruise,allergy_question,high,true,notify crew
+Can I have water?,voice,25E,landing_preparation,water_request,low,false,delay service
+Can I get coffee?,text,12B,landing,meal_request,low,false,delay service
+Can I buy a ticket for the train?,voice,25E,landing_preparation,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,text,11C,landing_preparation,allergy_question,high,true,notify crew
+Could I get an extra blanket?,voice,29C,cruise,blanket_request,low,true,inventory check then crew task
+My screen is frozen,text,24C,cruise,screen_issue,medium,true,IFE support task
+What was the announcement about turbulence?,quick_button,23D,landing,missed_announcement,low,false,answer from announcement history
+What is the weather in Paris?,voice,24A,taxi,out_of_scope,none,false,ignore request
+What is the weather in Paris?,voice,2F,boarding,out_of_scope,none,false,ignore request
+My screen is completely black,text,30B,landing_preparation,screen_issue,medium,true,IFE support task
+I am having chest pain,quick_button,21A,landing,medical_assistance,high,true,urgent crew alert
+Please bring me some water,quick_button,6E,cruise,water_request,low,true,crew task
+Can I have water?,text,25B,taxi,water_request,low,false,delay service
+I am having chest pain,text,25B,landing,medical_assistance,high,true,urgent crew alert
+What is the weather in Paris?,voice,4E,landing_preparation,out_of_scope,none,false,ignore request
+What was the announcement about turbulence?,voice,14C,takeoff,missed_announcement,low,false,answer from announcement history
+I feel dizzy. Can someone help?,quick_button,11D,landing_preparation,medical_assistance,high,true,urgent crew alert
+My screen is completely black,text,26E,landing,screen_issue,medium,true,IFE support task
+What did the captain say?,text,22D,cruise,missed_announcement,low,false,answer from announcement history
+Could I get an extra blanket?,quick_button,28D,landing,blanket_request,low,false,delay service
+What did the captain say?,quick_button,14F,cruise,missed_announcement,low,false,answer from announcement history
+What was the announcement about turbulence?,quick_button,19B,taxi,missed_announcement,low,false,answer from announcement history
+My screen is frozen,voice,15B,takeoff,screen_issue,medium,true,IFE support task
+Can I buy a ticket for the train?,voice,14D,landing_preparation,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,voice,28B,takeoff,allergy_question,high,true,notify crew
+Can I buy a ticket for the train?,text,3D,boarding,out_of_scope,none,false,ignore request
+My screen is completely black,quick_button,10C,boarding,screen_issue,medium,true,IFE support task
+I have a severe peanut allergy,voice,26E,takeoff,allergy_question,high,true,notify crew
+Can I buy a ticket for the train?,text,24C,landing_preparation,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,voice,18B,boarding,allergy_question,high,true,notify crew
+I feel dizzy. Can someone help?,voice,23D,boarding,medical_assistance,high,true,urgent crew alert
+What did the captain say?,voice,21E,cruise,missed_announcement,low,false,answer from announcement history
+Can I have water?,text,18A,taxi,water_request,low,false,delay service
+Can I have water?,quick_button,9F,cruise,water_request,low,true,crew task
+Can I buy a ticket for the train?,text,20F,cruise,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,quick_button,6C,cruise,allergy_question,high,true,notify crew
+Is there smoke coming from the overhead bin?,text,1F,landing,emergency,high,true,urgent crew alert
+My screen is completely black,text,17A,boarding,screen_issue,medium,true,IFE support task
+My screen is frozen,quick_button,29B,takeoff,screen_issue,medium,true,IFE support task
+Can I buy a ticket for the train?,voice,20D,taxi,out_of_scope,none,false,ignore request
+Please bring me some water,quick_button,26D,landing,water_request,low,false,delay service
+What did the captain say?,text,22E,landing_preparation,missed_announcement,low,false,answer from announcement history
+I have a severe peanut allergy,quick_button,11C,landing,allergy_question,high,true,notify crew
+My screen is frozen,quick_button,16A,taxi,screen_issue,medium,true,IFE support task
+Can I have water?,voice,2C,cruise,water_request,low,true,crew task
+Can I have water?,text,27A,landing,water_request,low,false,delay service
+Can I buy a ticket for the train?,quick_button,5F,landing_preparation,out_of_scope,none,false,ignore request
+I have a severe peanut allergy,text,11B,cruise,allergy_question,high,true,notify crew
+I have a severe peanut allergy,quick_button,5B,boarding,allergy_question,high,true,notify crew
+What did the captain say?,quick_button,8F,boarding,missed_announcement,low,false,answer from announcement history

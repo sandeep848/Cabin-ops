@@ -1,0 +1,15 @@
+**/node_modules/
+**/dist/
+**/__pycache__/
+**/.pytest_cache/
+*.db*
+backend/cabinops.db*
+backend/data/cabinops_requests.csv
+docs/
+tests/
+.git/
+.env*
+*.pdf
+checklist.py
+check.py
+*.md

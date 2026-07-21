@@ -1,0 +1,8 @@
+node_modules/
+dist/
+__pycache__/
+.pytest_cache/
+*.db*
+backend/cabinops.db*
+.env*
+.DS_Store
