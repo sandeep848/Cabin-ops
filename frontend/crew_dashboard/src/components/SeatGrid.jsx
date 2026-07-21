@@ -13,6 +13,40 @@ export default function SeatGrid({
   seatTaskMap,
   handleSeatClick,
 }) {
+  const [hoveredSeat, setHoveredSeat] = React.useState(null);
+
+  const getRequestStatus = (seat) => {
+    const t = seatTaskMap.get(seat);
+    if (!t || t.status === 'completed') return 'No active requests';
+    return getIntentLabel(t.intent) || t.intent;
+  };
+
+  const getUrgency = (seat) => {
+    const t = seatTaskMap.get(seat);
+    if (!t || t.status === 'completed') return null;
+    return t.urgency || 'low';
+  };
+
+  const getStatusColor = (seat) => {
+    const t = seatTaskMap.get(seat);
+    if (!t || t.status === 'completed') return 'var(--color-text-secondary)';
+    if (t.urgency === 'high' || t.intent === 'emergency' || t.intent === 'medical_assistance') {
+      return 'var(--color-danger)';
+    }
+    if (t.intent === 'screen_issue' || t.intent === 'seat_issue') {
+      return 'var(--color-accent)';
+    }
+    return 'var(--color-warning)';
+  };
+
+  const getUrgencyColor = (seat) => {
+    const t = seatTaskMap.get(seat);
+    if (!t) return 'var(--color-text-muted)';
+    if (t.urgency === 'high') return 'var(--color-danger)';
+    if (t.urgency === 'medium') return 'var(--color-warning)';
+    return 'var(--color-success)';
+  };
+
   const seatClassName = (seat) => {
     const t = seatTaskMap.get(seat);
     if (!t) return 'seat-btn';
@@ -78,28 +112,132 @@ export default function SeatGrid({
                 {['A', 'B', 'C'].map((col) => {
                   const seat = `${row}${col}`;
                   return (
-                    <button
+                    <div
                       key={col}
-                      className={`${seatClassName(seat)}${selectedSeat === seat ? ' selected' : ''}`}
-                      onClick={() => handleSeatClick(seat)}
-                      title={seat}
+                      style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                      onMouseEnter={() => setHoveredSeat(seat)}
+                      onMouseLeave={() => setHoveredSeat(null)}
                     >
-                      {col}
-                    </button>
+                      <button
+                        className={`${seatClassName(seat)}${selectedSeat === seat ? ' selected' : ''}`}
+                        onClick={() => handleSeatClick(seat)}
+                        title={seat}
+                      >
+                        {col}
+                      </button>
+                      {hoveredSeat === seat && (
+                        <div
+                          className="glass-card"
+                          style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            marginBottom: '8px',
+                            zIndex: 1000,
+                            width: '160px',
+                            padding: '8px 10px',
+                            fontSize: '11px',
+                            lineHeight: '1.4',
+                            textAlign: 'left',
+                            color: 'var(--color-text-primary)',
+                            pointerEvents: 'none',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                          }}
+                        >
+                          <div style={{ fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Seat {seat}</span>
+                            <span style={{ color: 'var(--color-text-secondary)', fontSize: '10px' }}>{cabinClass(row)}</span>
+                          </div>
+                          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', margin: '2px 0' }} />
+                          <div>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>Status: </span>
+                            <span style={{ color: getStatusColor(seat) }}>{getRequestStatus(seat)}</span>
+                          </div>
+                          {getUrgency(seat) && (
+                            <div>
+                              <span style={{ color: 'var(--color-text-secondary)' }}>Urgency: </span>
+                              <span style={{ 
+                                color: getUrgencyColor(seat), 
+                                fontWeight: '600',
+                                textTransform: 'uppercase',
+                                fontSize: '9px'
+                              }}>
+                                {getUrgency(seat)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
                 <div /> {/* aisle */}
                 {['D', 'E', 'F'].map((col) => {
                   const seat = `${row}${col}`;
                   return (
-                    <button
+                    <div
                       key={col}
-                      className={`${seatClassName(seat)}${selectedSeat === seat ? ' selected' : ''}`}
-                      onClick={() => handleSeatClick(seat)}
-                      title={seat}
+                      style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                      onMouseEnter={() => setHoveredSeat(seat)}
+                      onMouseLeave={() => setHoveredSeat(null)}
                     >
-                      {col}
-                    </button>
+                      <button
+                        className={`${seatClassName(seat)}${selectedSeat === seat ? ' selected' : ''}`}
+                        onClick={() => handleSeatClick(seat)}
+                        title={seat}
+                      >
+                        {col}
+                      </button>
+                      {hoveredSeat === seat && (
+                        <div
+                          className="glass-card"
+                          style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            marginBottom: '8px',
+                            zIndex: 1000,
+                            width: '160px',
+                            padding: '8px 10px',
+                            fontSize: '11px',
+                            lineHeight: '1.4',
+                            textAlign: 'left',
+                            color: 'var(--color-text-primary)',
+                            pointerEvents: 'none',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                          }}
+                        >
+                          <div style={{ fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Seat {seat}</span>
+                            <span style={{ color: 'var(--color-text-secondary)', fontSize: '10px' }}>{cabinClass(row)}</span>
+                          </div>
+                          <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', margin: '2px 0' }} />
+                          <div>
+                            <span style={{ color: 'var(--color-text-secondary)' }}>Status: </span>
+                            <span style={{ color: getStatusColor(seat) }}>{getRequestStatus(seat)}</span>
+                          </div>
+                          {getUrgency(seat) && (
+                            <div>
+                              <span style={{ color: 'var(--color-text-secondary)' }}>Urgency: </span>
+                              <span style={{ 
+                                color: getUrgencyColor(seat), 
+                                fontWeight: '600',
+                                textTransform: 'uppercase',
+                                fontSize: '9px'
+                              }}>
+                                {getUrgency(seat)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
