@@ -7,8 +7,13 @@ Urgency = Literal["high", "medium", "low", "none"]
 
 class PassengerRequest(BaseModel):
     seat: str = Field(..., pattern=r"^(?:[1-9]|[12][0-9]|30)[A-F]$", examples=["22A"])
-    text: str = Field(..., max_length=500, examples=["I feel dizzy. Can someone help?"])
+    text: str = Field(..., min_length=1, max_length=500, examples=["I feel dizzy. Can someone help?"])
     input_modality: InputModality = "text"
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def clean_text(cls, value):
+        return value.strip() if isinstance(value, str) else value
 
     @field_validator('seat', mode='before')
     @classmethod
@@ -46,11 +51,11 @@ class PassengerAuth(BaseModel):
         return v
 
 class CrewAuth(BaseModel):
-    username: str
-    password: str
+    username: str = Field(..., min_length=1, max_length=100)
+    password: str = Field(..., min_length=1, max_length=256)
 
 class Announcement(BaseModel):
     id: int | None = None
-    timestamp: str
+    timestamp: str = ""
     speaker: Literal["Captain", "Cabin Crew", "First Officer"]
-    text: str
+    text: str = Field(..., min_length=1, max_length=2000)

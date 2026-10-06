@@ -1298,3 +1298,14 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+
+/* Keyboard and motion accessibility. */
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #38bdf8; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+.view-toggle { padding: 10px 16px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; border-radius: 8px; cursor: pointer; margin: 8px 0; }
+.quick-services { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.quick-services button { min-height: 76px; border: 1px solid #334155; background: linear-gradient(135deg, #172554, #0f172a); border-radius: 12px; color: #e2e8f0; font: inherit; cursor: pointer; }
+.quick-services button:hover { border-color: #38bdf8; }
+.quick-services button:disabled { opacity: .45; cursor: not-allowed; }
+@media(max-width: 500px) { .quick-services { grid-template-columns: repeat(2, 1fr); } }

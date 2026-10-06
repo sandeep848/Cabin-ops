@@ -9,7 +9,7 @@ class EventManager:
 
     def subscribe(self) -> asyncio.Queue:
         """Register a new subscriber queue."""
-        queue = asyncio.Queue()
+        queue = asyncio.Queue(maxsize=100)
         with self._lock:
             self._queues.add(queue)
         return queue

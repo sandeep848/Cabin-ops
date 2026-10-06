@@ -1,3 +1,4 @@
+import { apiFetch as fetch } from './api.js';
 // Crew Command Center: Cabin crew portal for flight context configuration, inventory levels monitoring, and passenger duty queue management. Imported by main.jsx.
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import './App.css';
@@ -27,6 +28,8 @@ export default function App() {
   const [password,      setPassword]       = useState('');
   const [loginError,    setLoginError]     = useState(null);
   const [loginLoading,  setLoginLoading]   = useState(false);
+
+  const [operationError, setOperationError] = useState(null);
 
   /* Data */
   const [tasks,         setTasks]          = useState([]);
@@ -63,6 +66,11 @@ export default function App() {
     setInventory([]);
     setIsConnected(false);
   }, []);
+
+  useEffect(() => {
+    window.addEventListener('cabinops-session-expired', handleLogout);
+    return () => window.removeEventListener('cabinops-session-expired', handleLogout);
+  }, [handleLogout]);
 
   const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
@@ -132,7 +140,6 @@ export default function App() {
         fetchInventory(),
         fetchAnnouncements(),
       ]);
-      setIsConnected(true);
     } catch {
       setIsConnected(false);
     }
@@ -221,8 +228,8 @@ export default function App() {
       setToken(data.token);
       setRole(data.role);
       setFlightId(data.flight_id);
-    } catch {
-      setLoginError('Connection failed. Check that the server is running.');
+    } catch (error) {
+      setLoginError(error.message || 'Connection failed. Check that the server is running.');
     } finally {
       setLoginLoading(false);
     }
@@ -239,7 +246,8 @@ export default function App() {
         body: JSON.stringify(next),
       });
     } catch {
-      /* silent — next poll will correct */
+      setOperationError("Flight settings could not be saved. Please try again.");
+      fetchFlightContext();
     }
   }, [flightContext, authHeaders]);
 
@@ -254,7 +262,7 @@ export default function App() {
       );
       fetchTasks();
       fetchAnalytics();
-    } catch { /* ignore */ }
+    } catch (error) { setOperationError(error.message); }
     finally { setActionLoading(null); }
   };
 
@@ -268,7 +276,7 @@ export default function App() {
       );
       fetchTasks();
       fetchAnalytics();
-    } catch { /* ignore */ }
+    } catch (error) { setOperationError(error.message); }
     finally { setActionLoading(null); }
   };
 
@@ -278,7 +286,7 @@ export default function App() {
       await fetch(`${API}/api/crew/tasks/clear`, { method: 'POST', headers: authHeaders() });
       fetchTasks();
       fetchAnalytics();
-    } catch { /* ignore */ }
+    } catch (error) { setOperationError(error.message); }
   };
 
   /* ── Inventory restock ───────────────── */
@@ -290,7 +298,7 @@ export default function App() {
         headers: authHeaders(),
       });
       fetchInventory();
-    } catch { /* ignore */ }
+    } catch (error) { setOperationError(error.message); }
     finally { setInventoryRestocking(null); }
   };
 
@@ -310,7 +318,7 @@ export default function App() {
       });
       setNewAnnouncement((prev) => ({ ...prev, text: '' }));
       fetchAnnouncements();
-    } catch { /* ignore */ }
+    } catch (error) { setOperationError(error.message); }
     finally { setAnnouncementSending(false); }
   };
 
@@ -336,14 +344,15 @@ export default function App() {
   };
 
   /* ── Task grouping (active) ──────────── */
-  const ACTIVE_STATUSES  = useMemo(() => new Set(['pending', 'urgent_pending', 'accepted']), []);
-  const RESOLVED_STATUSES = useMemo(() => new Set(['completed', 'rejected', 'delayed', 'answered', 'ignored']), []);
+  const ACTIVE_STATUSES  = useMemo(() => new Set(['pending', 'urgent_pending', 'accepted', 'delayed']), []);
+  const RESOLVED_STATUSES = useMemo(() => new Set(['completed', 'rejected', 'answered', 'ignored']), []);
 
   const activeTasks   = useMemo(() => tasks.filter((t) => ACTIVE_STATUSES.has(t.status)), [tasks, ACTIVE_STATUSES]);
   const resolvedTasks = useMemo(() => tasks.filter((t) => RESOLVED_STATUSES.has(t.status)), [tasks, RESOLVED_STATUSES]);
 
   const groupedActive = useMemo(() => {
-    return activeTasks;
+    const priority = { high: 0, medium: 1, low: 2, none: 3 };
+    return [...activeTasks].sort((a, b) => (priority[a.urgency] ?? 3) - (priority[b.urgency] ?? 3) || a.id - b.id);
   }, [activeTasks]);
 
   /* ── Seat → active task map ──────────── */
@@ -367,7 +376,7 @@ export default function App() {
   const resolvedCount = useMemo(() => resolvedTasks.filter((t) => t.status === 'completed').length, [resolvedTasks]);
 
   /* ── Restricted phase ────────────────── */
-  const isRestricted = RESTRICTED_PHASES.has(flightContext.flight_phase);
+  const isRestricted = flightContext.seatbelt_sign || RESTRICTED_PHASES.has(flightContext.flight_phase);
 
   /* ─── LOGIN PAGE ─────────────────────── */
   if (!token) {
@@ -376,7 +385,7 @@ export default function App() {
         <div className="login-card">
           <div className="login-brand">
             <div className="login-icon">✈</div>
-            <div className="login-title">ApexAir Crew</div>
+            <div className="login-title">CabinOps Crew</div>
             <div className="login-subtitle">Authorized Crew Access</div>
           </div>
 
@@ -420,6 +429,7 @@ export default function App() {
   /* ─── MAIN APP ───────────────────────── */
   return (
     <div className="app">
+      {operationError && <div className="operation-error" role="alert">{operationError}<button onClick={() => setOperationError(null)} aria-label="Dismiss error">×</button></div>}
       <Header
         flightContext={flightContext}
         updateFlightContext={updateFlightContext}
@@ -570,7 +580,7 @@ export default function App() {
           <div className="modal-card">
             <div className="modal-title">Clear All Requests</div>
             <div className="confirm-body">
-              This will delete all passenger requests and reset inventory. Are you sure?
+              This will clear request history for this flight. Inventory stock is preserved.
             </div>
             <div className="modal-actions">
               <button className="btn-modal-cancel" onClick={() => setShowClearConfirm(false)}>

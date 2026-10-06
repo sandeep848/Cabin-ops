@@ -23,6 +23,11 @@ def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(tasks)")}
+        if "inventory_item" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN inventory_item TEXT")
+        if "inventory_reserved" not in columns:
+            conn.execute("ALTER TABLE tasks ADD COLUMN inventory_reserved INTEGER NOT NULL DEFAULT 0")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks (status, created_at);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_seat_created ON tasks (seat, created_at);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_zone_status ON tasks (zone, status);")
@@ -92,11 +97,11 @@ def init_users_db() -> None:
         row = conn.execute("SELECT COUNT(*) FROM users").fetchone()
         if row[0] == 0:
             # Seed demo users for local dev/testing
-            if os.getenv("ENV") != "production" or os.getenv("TESTING") == "true":
+            if os.getenv("CREW_PASSWORD") or os.getenv("ENV") != "production" or os.getenv("TESTING") == "true":
                 from backend.security.hashing import hash_password
                 conn.execute(
                     "INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                    ("crew", hash_password("crew_password"), "crew")
+                    (os.getenv("CREW_USERNAME", "crew"), hash_password(os.getenv("CREW_PASSWORD", "crew_password")), "crew")
                 )
                 conn.commit()
 
@@ -114,7 +119,7 @@ def init_bookings_db() -> None:
         conn.commit()
         
         row = conn.execute("SELECT COUNT(*) FROM bookings").fetchone()
-        if row[0] == 0:
+        if row[0] == 0 and os.getenv("ENV") != "production":
             seat_map_file = DATA_DIR / "seat_map.json"
             if seat_map_file.exists():
                 try:

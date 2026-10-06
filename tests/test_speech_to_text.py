@@ -1,30 +1,25 @@
 import pytest
-from backend.services.speech_to_text import transcribe_audio_stub
+from backend.services import speech_to_text
 
-def test_transcribe_audio_stub_medical_keywords():
-    # Verify that when text hint (bytes) like b"dizzy" or b"medical" is passed,
-    # it returns the medical emergency sentence.
-    assert transcribe_audio_stub(b"dizzy") == "I feel dizzy and need medical assistance."
-    assert transcribe_audio_stub(b"medical") == "I feel dizzy and need medical assistance."
-    
-    # Verify variations and casing
-    assert transcribe_audio_stub(b"DiZzY") == "I feel dizzy and need medical assistance."
-    assert transcribe_audio_stub(b"  medical  ") == "I feel dizzy and need medical assistance."
-    assert transcribe_audio_stub(b"dizziness") == "I feel dizzy and need medical assistance."
-    assert transcribe_audio_stub(b"nausea") == "I feel dizzy and need medical assistance."
-    assert transcribe_audio_stub(b"pain") == "I feel dizzy and need medical assistance."
+def test_empty_audio_is_not_invented():
+    with pytest.raises(ValueError, match="empty"):
+        speech_to_text.transcribe_audio(b"")
 
-def test_transcribe_audio_stub_emergency_keywords():
-    # Verify other mappings
-    assert transcribe_audio_stub(b"smoke") == "There is an emergency situation that needs immediate attention."
-    assert transcribe_audio_stub(b"emergency") == "There is an emergency situation that needs immediate attention."
-    assert transcribe_audio_stub(b"danger") == "There is an emergency situation that needs immediate attention."
+def test_unavailable_engine_is_not_invented(monkeypatch):
+    def unavailable():
+        raise RuntimeError("Voice unavailable")
+    monkeypatch.setattr(speech_to_text, "get_whisper_model", unavailable)
+    with pytest.raises(RuntimeError):
+        speech_to_text.transcribe_audio(b"audio")
 
-def test_transcribe_audio_stub_allergies():
-    assert transcribe_audio_stub(b"allergic") == "I have a severe allergy and need to verify meal ingredients."
-    assert transcribe_audio_stub(b"peanut") == "I have a severe allergy and need to verify meal ingredients."
-
-def test_transcribe_audio_stub_fallback():
-    # It gracefully falls back to the default water request for unmapped/empty content.
-    assert transcribe_audio_stub(b"") == "Could I please get some water?"
-    assert transcribe_audio_stub(b"random gibberish hello") == "Could I please get some water?"
+def test_transcription_and_tempfile_cleanup(monkeypatch):
+    from pathlib import Path
+    paths = []
+    class Model:
+        def transcribe(self, path):
+            paths.append(path)
+            assert Path(path).read_bytes() == b"actual audio"
+            return {"text": " I need help. "}
+    monkeypatch.setattr(speech_to_text, "get_whisper_model", lambda: Model())
+    assert speech_to_text.transcribe_audio(b"actual audio") == "I need help."
+    assert not Path(paths[0]).exists()

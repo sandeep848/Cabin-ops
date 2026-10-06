@@ -16,9 +16,7 @@ class RateLimiter:
         
     def __call__(self, request: Request):
         ip = "unknown"
-        if request.headers.get("x-forwarded-for"):
-            ip = request.headers.get("x-forwarded-for").split(",")[0].strip()
-        elif request.client:
+        if request.client:
             ip = request.client.host
             
         path = request.url.path

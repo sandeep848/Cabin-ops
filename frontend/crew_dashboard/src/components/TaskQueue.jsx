@@ -64,7 +64,7 @@ export default function TaskQueue({
                 ? 'urgency-medium'
                 : '';
 
-              const isEmergency = task.intent === 'emergency';
+              const isEmergency = task.intent === 'emergency' || task.intent === 'medical_assistance' || task.intent === 'allergy_question';
               const restricted  = isRestricted && !isEmergency;
               const loading     = actionLoading === task.id;
 
@@ -138,7 +138,7 @@ export default function TaskQueue({
                       <button className="btn-restricted" disabled>
                         Restricted (Phase)
                       </button>
-                    ) : (task.status === 'pending' || task.status === 'urgent_pending') ? (
+                    ) : (task.status === 'pending' || task.status === 'urgent_pending' || task.status === 'delayed') ? (
                       <button
                         className={`btn-action ${task.urgency === 'high' ? 'fulfill-high' : 'fulfill-med-low'}`}
                         disabled={loading}

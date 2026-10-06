@@ -16,7 +16,7 @@ def evaluate() -> None:
     
     if not DATASET_PATH.exists():
         print(f"[ERROR] Dataset not found at: {DATASET_PATH}")
-        return
+        raise SystemExit(1)
         
     records = []
     with open(DATASET_PATH, "r", encoding="utf-8") as f:
@@ -28,7 +28,7 @@ def evaluate() -> None:
     total = len(records)
     if total == 0:
         print("[WARN] Dataset is empty.")
-        return
+        raise SystemExit(1)
         
     correct_intent = 0
     correct_urgency = 0
@@ -84,6 +84,8 @@ def evaluate() -> None:
     print(f"  Urgency Accuracy: {correct_urgency}/{total} ({correct_urgency/total*100:.2f}%)")
     print(f"  Crew Req Accuracy: {correct_crew}/{total} ({correct_crew/total*100:.2f}%)")
     print("=" * 72)
+    if any(count != total for count in [correct_intent, correct_urgency, correct_crew]):
+        raise SystemExit(1)
 
 if __name__ == "__main__":
     import sys

@@ -1,6 +1,6 @@
 /* Crew Command Center: CSS styles and layout rules for the crew command center portal. Imported by main.jsx. */
 /* ─────────────────────────────────────────
-   ApexAir Crew Command Center — App.css
+   CabinOps Crew Command Center — App.css
    ───────────────────────────────────────── */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -1491,3 +1491,27 @@ input:checked + .toggle-slider::before {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+
+/* Keyboard and motion accessibility. */
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #38bdf8; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+.operation-error { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 1000; padding: 12px 18px; border: 1px solid #f87171; background: #450a0a; color: #fff; border-radius: 10px; max-width: 90vw; }
+.operation-error button { margin-left: 16px; background: transparent; color: inherit; border: 0; cursor: pointer; }
+@media (max-width: 1000px) {
+  .header { height: auto; min-height: 64px; flex-wrap: wrap; gap: 12px; padding: 14px; }
+  .header-center { flex-wrap: wrap; order: 3; width: 100%; justify-content: center; }
+  .main-layout { flex-wrap: wrap; overflow: auto; height: auto; }
+  .sidebar { width: 240px; }
+  .queue { flex: 1; min-width: 300px; min-height: 420px; }
+  .map-panel { width: 100%; max-height: 650px; }
+  .app { height: auto; min-height: 100vh; overflow: auto; }
+}
+@media (max-width: 620px) { .sidebar, .queue { width: 100%; flex: auto; min-width: 0; } .header-brand-sub, .header-sep { display: none; } }
+
+.view-toggle { padding: 10px 16px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; border-radius: 8px; cursor: pointer; margin: 8px 0; }
+.quick-services { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.quick-services button { min-height: 76px; border: 1px solid #334155; background: linear-gradient(135deg, #172554, #0f172a); border-radius: 12px; color: #e2e8f0; font: inherit; cursor: pointer; }
+.quick-services button:hover { border-color: #38bdf8; }
+.quick-services button:disabled { opacity: .45; cursor: not-allowed; }
+@media(max-width: 500px) { .quick-services { grid-template-columns: repeat(2, 1fr); } }

@@ -52,25 +52,6 @@ def sync_announcements_json(flight_id: str = "APX-001") -> None:
         logger.error(f"Error syncing announcements JSON: {exc}", exc_info=True)
 
 def get_db_flight_context(flight_id: str = "APX-001") -> dict:
-    global _last_context_mtime
-    flight_context_file = DATA_DIR / "flight_context.json"
-    if flight_context_file.exists():
-        try:
-            mtime = os.path.getmtime(flight_context_file)
-            if mtime != _last_context_mtime:
-                # Reload file into DB
-                data = json.loads(flight_context_file.read_text(encoding="utf-8"))
-                with get_connection() as conn:
-                    for k, v in data.items():
-                        conn.execute(
-                            "INSERT OR REPLACE INTO flight_context (flight_id, key, value) VALUES (?, ?, ?)",
-                            (flight_id, k, str(v))
-                        )
-                    conn.commit()
-                _last_context_mtime = mtime
-        except Exception as exc:
-            logger.error(f"Error reloading flight context file: {exc}", exc_info=True)
-
     with get_connection() as conn:
         rows = conn.execute("SELECT key, value FROM flight_context WHERE flight_id = ?", (flight_id,)).fetchall()
         ctx = {}
@@ -88,7 +69,6 @@ def get_db_flight_context(flight_id: str = "APX-001") -> dict:
         return ctx
 
 def update_db_flight_context(ctx: dict, flight_id: str = "APX-001") -> None:
-    global _last_context_mtime
     with get_connection() as conn:
         for k, v in ctx.items():
             conn.execute(
@@ -96,22 +76,18 @@ def update_db_flight_context(ctx: dict, flight_id: str = "APX-001") -> None:
                 (flight_id, k, str(v))
             )
         conn.commit()
-    # Sync to JSON file for compatibility with existing tests
-    try:
-        flight_context_file = DATA_DIR / "flight_context.json"
-        flight_context_file.write_text(json.dumps(ctx, indent=2), encoding="utf-8")
-        _last_context_mtime = os.path.getmtime(flight_context_file)
-    except Exception as exc:
-        logger.error(f"Error syncing flight context DB to JSON: {exc}", exc_info=True)
 
-def insert_task(seat: str, zone: str, intent: str, urgency: str, status: str, action: str, flight_id: str = "APX-001") -> int:
-    with get_connection() as conn:
+def insert_task(seat: str, zone: str, intent: str, urgency: str, status: str, action: str, flight_id: str = "APX-001", inventory_item=None, inventory_reserved=False, connection=None) -> int:
+    def insert(conn):
         cur = conn.execute(
-            "INSERT INTO tasks (flight_id, seat, zone, intent, urgency, status, action) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (flight_id, seat.upper(), zone, intent, urgency, status, action),
+            "INSERT INTO tasks (flight_id, seat, zone, intent, urgency, status, action, inventory_item, inventory_reserved) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (flight_id, seat.upper(), zone, intent, urgency, status, action, inventory_item, int(inventory_reserved)),
         )
-        conn.commit()
         return int(cur.lastrowid)
+    if connection is not None:
+        return insert(connection)
+    with get_connection() as conn:
+        return insert(conn)
 
 def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: int = 100, offset: int = 0, flight_id: str = "APX-001") -> list[dict]:
     if limit is None or limit <= 0:
@@ -135,12 +111,15 @@ def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: in
         query += " AND zone = ?"
         params.append(zone)
     
-    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
     params.extend([limit, offset])
             
     with get_connection() as conn:
         rows = conn.execute(query, params).fetchall()
-        return [dict(row) for row in rows]
+        result = [dict(row) for row in rows]
+        for task in result:
+            task["created_at"] = task["created_at"].replace(" ", "T") + "Z"
+        return result
 
 def update_task_status(task_id: int, new_status: str, permitted_flights: list[str] = None) -> bool:
     if new_status not in VALID_STATUSES:
@@ -152,7 +131,8 @@ def update_task_status(task_id: int, new_status: str, permitted_flights: list[st
     params = [new_status, task_id] + allowed_prev
     
     with get_connection() as conn:
-        row = conn.execute("SELECT status, flight_id FROM tasks WHERE id = ?", (task_id,)).fetchone()
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
         if not row:
             return False
         current_status = row["status"]
@@ -164,16 +144,27 @@ def update_task_status(task_id: int, new_status: str, permitted_flights: list[st
         if not can_transition(current_status, new_status):
             raise ValueError(f"Illegal status transition from {current_status} to {new_status}")
             
+        # Enforce current service restrictions on the server, not only in UI.
+        if new_status in {"accepted", "completed"} and current_status != new_status and row["urgency"] != "high":
+            context = get_db_flight_context(task_flight_id)
+            restricted = context.get("flight_phase") in {"boarding", "taxi", "takeoff", "landing_preparation", "landing"}
+            if restricted or context.get("seatbelt_sign") or (row["intent"] == "meal_request" and not context.get("meal_service_active", True)):
+                raise ValueError("Service is currently restricted for this flight")
+        if new_status in {"accepted", "completed"} and row["inventory_item"] and not row["inventory_reserved"]:
+            from backend.services.inventory import reserve_item
+            if not reserve_item(row["inventory_item"], connection=conn):
+                raise ValueError("Requested item is currently out of stock")
+            conn.execute("UPDATE tasks SET inventory_reserved = 1 WHERE id = ?", (task_id,))
         cur = conn.execute(query, params)
-        conn.commit()
-        return cur.rowcount > 0
+        if cur.rowcount == 0:
+            raise ValueError("Task changed concurrently; reload and retry")
+        return True
 
-def clear_all_tasks() -> None:
+def clear_all_tasks(flight_id: str = "APX-001") -> None:
     with get_connection() as conn:
-        conn.execute("DELETE FROM tasks")
+        conn.execute("DELETE FROM tasks WHERE flight_id = ?", (flight_id,))
         conn.commit()
-    from backend.services.inventory import reset_inventory_db
-    reset_inventory_db()
+    # Clearing request history must not replenish physical inventory.
 
 def get_analytics(flight_id: str = "APX-001", status: str = None) -> dict:
     query_total = "SELECT COUNT(*) FROM tasks WHERE flight_id = ?"

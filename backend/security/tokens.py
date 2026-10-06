@@ -5,29 +5,12 @@ import base64
 import time
 import json
 import logging
+from backend import config  # Load configuration before reading security settings.
 
 logger = logging.getLogger("cabinops.security.tokens")
 
 # Ensure .env is loaded if it exists
-def _load_env():
-    from pathlib import Path
-    env_file = Path(__file__).resolve().parent.parent.parent / ".env"
-    if env_file.exists():
-        try:
-            for line in env_file.read_text(encoding="utf-8").splitlines():
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" in line:
-                    k, v = line.split("=", 1)
-                    k = k.strip()
-                    v = v.strip().strip('"').strip("'")
-                    if k and k not in os.environ:
-                        os.environ[k] = v
-        except Exception:
-            pass
 
-_load_env()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 TESTING = os.getenv("TESTING", "false").lower() == "true"

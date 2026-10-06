@@ -44,7 +44,7 @@ export default function Header({
       {/* Left */}
       <div className="header-left">
         <span className="header-logo-icon">✈</span>
-        <span className="header-brand-name">ApexAir</span>
+        <span className="header-brand-name">CabinOps</span>
         <div className="header-sep" />
         <span className="header-brand-sub">Crew Command</span>
       </div>

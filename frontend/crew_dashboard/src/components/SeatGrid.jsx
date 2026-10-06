@@ -1,5 +1,6 @@
 import React from 'react';
-import Cabin3DView from '../Cabin3DView';
+import OptionalView from '../OptionalView';
+const Cabin3DView = React.lazy(() => import('../Cabin3DView'));
 import { TOTAL_ROWS, SECTION_LABELS, getIntentLabel } from './Helpers';
 
 export default function SeatGrid({
@@ -13,6 +14,7 @@ export default function SeatGrid({
   seatTaskMap,
   handleSeatClick,
 }) {
+  const [show3D, setShow3D] = React.useState(false);
   const [hoveredSeat, setHoveredSeat] = React.useState(null);
 
   const getRequestStatus = (seat) => {
@@ -86,7 +88,8 @@ export default function SeatGrid({
       </div>
 
       <div className="map-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <Cabin3DView tasks={tasks} flightContext={flightContext} onSeatSelect={handleSeatClick} />
+        <button className="view-toggle" aria-expanded={show3D} onClick={() => setShow3D(value => !value)}>{show3D ? 'Hide 3D cabin' : 'Show 3D cabin'}</button>
+        {show3D && <OptionalView><React.Suspense fallback={<p>Loading 3D cabin…</p>}><Cabin3DView tasks={tasks} flightContext={flightContext} onSeatSelect={handleSeatClick} /></React.Suspense></OptionalView>}
         {/* Column labels */}
         <div className="seat-col-labels">
           <div className="seat-col-label" />

@@ -5,4 +5,8 @@ __pycache__/
 *.db*
 backend/cabinops.db*
 .env*
+!.env.example
+.venv/
+playwright-report/
+test-results/
 .DS_Store

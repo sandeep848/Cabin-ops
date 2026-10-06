@@ -46,18 +46,20 @@ def reset_inventory_db() -> None:
         conn.commit()
     init_inventory_db()
 
-def reserve_item(item: str | None, quantity: int = 1) -> bool:
+def reserve_item(item: str | None, quantity: int = 1, connection=None) -> bool:
     if not item:
         return True
-    item_key = item.lower()
-    with get_connection() as conn:
-        # Atomic reservation using stock >= quantity constraint
-        cur = conn.execute(
+    if quantity < 1:
+        raise ValueError("Reservation quantity must be positive")
+    def reserve(conn):
+        return conn.execute(
             "UPDATE inventory SET stock = stock - ? WHERE item = ? AND stock >= ?",
-            (quantity, item_key, quantity)
-        )
-        conn.commit()
-        return cur.rowcount > 0
+            (quantity, item.lower(), quantity),
+        ).rowcount > 0
+    if connection is not None:
+        return reserve(connection)
+    with get_connection() as conn:
+        return reserve(conn)
 
 def suggest_alternative(item: str | None) -> str | None:
     if not item:

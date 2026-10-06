@@ -35,6 +35,8 @@ export default function RequestForm({
           ref={textareaRef}
           className="request-textarea"
           rows={3}
+          maxLength={500}
+          aria-label="Your service request"
           placeholder="Ask anything or speak"
           value={requestText}
           onChange={(e) => setRequestText(e.target.value)}
@@ -76,7 +78,7 @@ export default function RequestForm({
           )}
           {voiceError && (
             <span className="recording-timer" style={{ color: 'var(--color-danger)' }}>
-              Voice Input Error
+              {voiceError}
             </span>
           )}
         </div>
@@ -109,7 +111,7 @@ export default function RequestForm({
       {assistantReply && (
         <div className="assistant-reply">
           <div className="assistant-reply-header">
-            <span className="assistant-reply-label">ApexAir Assistant</span>
+            <span className="assistant-reply-label">CabinOps Assistant</span>
             <span
               className={`assistant-reply-badge ${
                 assistantReply.crew_required
@@ -117,7 +119,7 @@ export default function RequestForm({
                   : 'assistant-reply-badge--auto'
               }`}
             >
-              {assistantReply.crew_required ? 'Crew Dispatched' : 'Auto-Answered'}
+              {assistantReply.crew_required ? 'Sent to crew' : assistantReply.status === 'delayed' ? 'Service delayed' : assistantReply.status === 'rejected' ? 'Unavailable' : 'Answered'}
             </span>
           </div>
           <p className="assistant-reply-text">

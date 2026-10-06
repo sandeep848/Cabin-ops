@@ -1,7 +1,15 @@
+import { apiFetch as fetch } from './api.js';
 // Passenger Portal: Seatback interface for passenger request submission and announcements playback. Imported by main.jsx.
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import './App.css';
-import Passenger3DView from './Passenger3DView';
+import OptionalView from './OptionalView';
+const Passenger3DView = lazy(() => import('./Passenger3DView'));
+const QUICK_SERVICES = [
+  ['Water', 'Could I get some water please?', true],
+  ['Blanket', 'Can I request an extra blanket?', true],
+  ['Lavatory', 'Is the lavatory currently available?', false],
+  ['Announcement', 'What did the captain announce?', false],
+];
 
 // Extracted Components
 import Header from './components/Header';
@@ -14,14 +22,8 @@ import { IconPlane } from './components/Icons';
 
 const API_BASE = '';
 
-const VOICE_SAMPLES = [
-  'Could I please get some extra napkins with my meal?',
-  'Is the lavatory at the rear of the plane currently available?',
-  'I think I may have left my jacket in the overhead bin a few rows back.',
-  'Can someone help me adjust my seat? The recline button does not seem to work.',
-];
-
 export default function App() {
+  const [show3D, setShow3D] = useState(false);
   // ── Auth state ──
   const [seat, setSeat] = useState('');
   const [bookingRef, setBookingRef] = useState('');
@@ -66,13 +68,12 @@ export default function App() {
   const transcribeRef = useRef(null);
   const textareaRef = useRef(null);
   const recognitionRef = useRef(null);
-  const [useSimulation, setUseSimulation] = useState(false);
 
   // ─────────────────────────────────────────
   // DERIVED
   // ─────────────────────────────────────────
   const { flight_phase, seatbelt_sign } = flightContext;
-  const restrictedPhases = ['takeoff', 'landing_preparation', 'landing'];
+  const restrictedPhases = ['boarding', 'taxi', 'takeoff', 'landing_preparation', 'landing'];
   const isRestricted = seatbelt_sign === true || restrictedPhases.includes(flight_phase);
   const showAlertBar = isRestricted;
   const hasEmergency = myRequests.some((r) => r.intent === 'emergency' && r.status !== 'completed');
@@ -93,6 +94,11 @@ export default function App() {
     setAuthedSeat('');
     setFlightId('');
   }, []);
+
+  useEffect(() => {
+    window.addEventListener('cabinops-session-expired', handleAuthError);
+    return () => window.removeEventListener('cabinops-session-expired', handleAuthError);
+  }, [handleAuthError]);
 
   const fetchPassengerRequests = useCallback(async () => {
     if (!token) return;
@@ -142,7 +148,6 @@ export default function App() {
         fetchFlightContext(),
         fetchAnnouncements(),
       ]);
-      setIsConnected(true);
     } catch {
       setIsConnected(false);
     } finally {
@@ -296,7 +301,7 @@ export default function App() {
 
   const openSeatPicker = () => {
     setNewPickerSeat(authedSeat);
-    setNewPickerRef(bookingRef || 'DEMO');
+    setNewPickerRef(bookingRef);
     setPickerError(null);
     setShowSeatPicker(true);
   };
@@ -362,135 +367,44 @@ export default function App() {
     }
   }, []);
 
-  const startSimulation = () => {
-    setIsRecording(true);
-    setRecordingSeconds(0);
-    setAssistantReply(null);
-    setSubmitError(null);
-    setVoiceError(false);
-    clearInterval(recordingTimerRef.current);
-    recordingTimerRef.current = setInterval(() => {
-      setRecordingSeconds((s) => s + 1);
-    }, 1000);
-  };
-
   const handleMicClick = () => {
-    if (voiceError) {
-      setVoiceError(false);
+    if (voiceError) { setVoiceError(false); return; }
+    if (isRecording) { recognitionRef.current?.stop(); return; }
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      setVoiceError('Voice input is unavailable in this browser. Please type your request.');
       return;
     }
-    if (isTranscribing) return;
-
-    if (isRecording) {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch (e) {}
-      } else {
-        clearInterval(recordingTimerRef.current);
-        setIsRecording(false);
-
-        // Short press simulation produces a voice error
-        if (recordingSeconds < 1) {
-          setVoiceError(true);
-          setRecordingSeconds(0);
-          return;
-        }
-
+    try {
+      const rec = new Recognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+      rec.onstart = () => {
+        setIsRecording(true);
         setRecordingSeconds(0);
-        setIsTranscribing(true);
-
-        const phrase = VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)];
-        let idx = 0;
-        setRequestText('');
-
-        const typeChar = () => {
-          idx++;
-          setRequestText(phrase.slice(0, idx));
-          if (idx < phrase.length) {
-            transcribeRef.current = setTimeout(typeChar, 35);
-          } else {
-            setIsTranscribing(false);
-          }
-        };
-        transcribeRef.current = setTimeout(typeChar, 35);
-      }
-    } else {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (useSimulation || !SpeechRecognition) {
-        startSimulation();
-      } else {
-        try {
-          const rec = new SpeechRecognition();
-          rec.continuous = true;
-          rec.interimResults = true;
-          rec.lang = 'en-US';
-
-          rec.onstart = () => {
-            setIsRecording(true);
-            setRecordingSeconds(0);
-            setAssistantReply(null);
-            setSubmitError(null);
-            setVoiceError(false);
-            clearInterval(recordingTimerRef.current);
-            recordingTimerRef.current = setInterval(() => {
-              setRecordingSeconds((s) => s + 1);
-            }, 1000);
-          };
-
-          rec.onresult = (event) => {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-              finalTranscript += event.results[i][0].transcript;
-            }
-            if (finalTranscript) {
-              setRequestText(finalTranscript);
-            }
-          };
-
-          rec.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            if (event.error === 'not-allowed') {
-              setUseSimulation(true);
-              if (recognitionRef.current) {
-                try {
-                  recognitionRef.current.onend = null;
-                  recognitionRef.current.stop();
-                } catch (e) {}
-                recognitionRef.current = null;
-              }
-              startSimulation();
-            } else {
-              setVoiceError(true);
-              setIsRecording(false);
-              clearInterval(recordingTimerRef.current);
-              recognitionRef.current = null;
-            }
-          };
-
-          rec.onend = () => {
-            setIsRecording(false);
-            clearInterval(recordingTimerRef.current);
-            recognitionRef.current = null;
-          };
-
-          recognitionRef.current = rec;
-          rec.start();
-        } catch (err) {
-          console.error('Failed to start SpeechRecognition:', err);
-          setUseSimulation(true);
-          startSimulation();
-        }
-      }
+        setVoiceError(false);
+        recordingTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
+      };
+      rec.onresult = event => {
+        const transcript = Array.from(event.results).map(result => result[0].transcript).join(' ');
+        setRequestText(transcript.slice(0, 500));
+      };
+      rec.onerror = event => {
+        stopVoice();
+        setVoiceError(event.error === 'not-allowed' ? 'Microphone permission denied. Please type your request.' : 'Speech could not be recognized. Please try again or type your request.');
+      };
+      rec.onend = () => { setIsRecording(false); clearInterval(recordingTimerRef.current); recognitionRef.current = null; };
+      recognitionRef.current = rec;
+      rec.start();
+    } catch {
+      stopVoice();
+      setVoiceError('Voice input could not start. Please type your request.');
     }
   };
 
   // Cleanup on unmount & SpeechRecognition initialisation
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setUseSimulation(true);
-    }
     return () => {
       clearInterval(recordingTimerRef.current);
       clearTimeout(transcribeRef.current);
@@ -514,7 +428,7 @@ export default function App() {
               <span className="login-logo-icon">
                 <IconPlane size={26} />
               </span>
-              <span className="login-wordmark">ApexAir</span>
+              <span className="login-wordmark">CabinOps</span>
             </div>
             <span className="login-subtitle">Seatback Assistant</span>
           </div>
@@ -555,7 +469,7 @@ export default function App() {
                 disabled={loginLoading}
               />
               <p className="form-helper">
-                Use <code>DEMO</code> to access without a reservation
+                Enter the booking reference supplied for your flight. Local demo: <code>DEMO</code>.
               </p>
             </div>
 
@@ -613,7 +527,11 @@ export default function App() {
         <section>
           <p className="greeting-text">Hi, Seat {authedSeat}. How can I help?</p>
           <div className="quick-tiles-container">
-            <Passenger3DView onServiceSelect={handleQuickTile} isRestricted={isRestricted} />
+            <div className="quick-services">
+              {QUICK_SERVICES.map(([label, text, restricted]) => <button key={label} disabled={submitting || (restricted && isRestricted)} onClick={() => handleQuickTile(text)}>{label}</button>)}
+            </div>
+            <button className="view-toggle" aria-expanded={show3D} onClick={() => setShow3D(value => !value)}>{show3D ? 'Hide 3D menu' : 'Show 3D menu'}</button>
+            {show3D && <OptionalView><Suspense fallback={<p>Loading 3D menu…</p>}><Passenger3DView onServiceSelect={handleQuickTile} isRestricted={isRestricted || submitting} /></Suspense></OptionalView>}
           </div>
         </section>
 

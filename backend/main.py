@@ -46,7 +46,7 @@ from backend.models import (
 from backend.services.flight_rules import apply_flight_rules
 from backend.services.intent_parser import parse_request
 from backend.services.inventory import reserve_item, suggest_alternative
-from backend.services.speech_to_text import transcribe_audio_stub
+from backend.services.speech_to_text import transcribe_audio as transcribe_audio_bytes
 from backend.services.router import seat_to_zone
 
 # Configure logging
@@ -54,25 +54,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("cabinops")
 
 # Load .env file manually if it exists
-def _load_env():
-    from pathlib import Path
-    env_file = Path(__file__).resolve().parent.parent / ".env"
-    if env_file.exists():
-        try:
-            for line in env_file.read_text(encoding="utf-8").splitlines():
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "=" in line:
-                    k, v = line.split("=", 1)
-                    k = k.strip()
-                    v = v.strip().strip('"').strip("'")
-                    if k and k not in os.environ:
-                        os.environ[k] = v
-        except Exception:
-            pass
 
-_load_env()
 
 
 
@@ -82,8 +64,8 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
 
-app = FastAPI(title="CabinOps AI Prototype", lifespan=lifespan)
-app.mount("/project-docs", StaticFiles(directory="docs"), name="project-docs")
+app = FastAPI(title="CabinOps API", lifespan=lifespan)
+app.mount("/project-docs", StaticFiles(directory=str(__import__("pathlib").Path(__file__).resolve().parent.parent / "docs")), name="project-docs")
 
 # Environment CORS settings
 origins_str = os.getenv("CORS_ALLOWED_ORIGINS", "")
@@ -112,7 +94,8 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
+    if request.url.path not in {"/docs", "/redoc"}:
+        response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     if os.getenv("ENV", "production") == "production":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -143,7 +126,13 @@ async def events_endpoint(token: str | None = Query(None)):
         try:
             yield f"data: {json.dumps({'status': 'connected'})}\n\n"
             while True:
-                message = await queue.get()
+                try:
+                    message = await asyncio.wait_for(queue.get(), timeout=20)
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+                    continue
+                if not verify_token(token):
+                    break
                 data = json.dumps(message) if isinstance(message, (dict, list)) else str(message)
                 yield f"data: {data}\n\n"
         except asyncio.CancelledError:
@@ -152,7 +141,7 @@ async def events_endpoint(token: str | None = Query(None)):
         finally:
             event_manager.unsubscribe(queue)
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 
@@ -183,7 +172,7 @@ def auth_passenger(payload: PassengerAuth, _ = Depends(auth_limiter)) -> dict:
     booking_ref = payload.booking_reference
     
     flight_id = None
-    if booking_ref.upper() == "DEMO":
+    if booking_ref.upper() == "DEMO" and os.getenv("ENV", "development") != "production":
         flight_id = "APX-001"
     else:
         from backend.database.connection import get_connection
@@ -201,7 +190,7 @@ def auth_passenger(payload: PassengerAuth, _ = Depends(auth_limiter)) -> dict:
     if not flight_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid seat or booking reference. Try booking reference 'DEMO'."
+            detail="Invalid seat or booking reference."
         )
         
     token = generate_token({"role": "passenger", "seat": seat.upper(), "flight_id": flight_id})
@@ -259,51 +248,62 @@ async def create_request(
         
     parsed = apply_flight_rules(parsed, flight_context)
 
-    # Wire inventory checking and reservation
-    item = parsed.get("slots", {}).get("item")
-    if item and parsed["crew_required"]:
-        if not reserve_item(item):
-            parsed["crew_required"] = False
-            parsed["assigned_zone"] = None
-            parsed["status"] = "rejected"
-            alt = suggest_alternative(item)
-            if alt:
-                parsed["action"] = f"Requested item '{item.replace('_', ' ').capitalize()}' is currently unavailable. Recommended alternative: '{alt.replace('_', ' ').capitalize()}'."
+    from backend.database.connection import get_connection
+    # A reservation and its request record commit together, or roll back together.
+    with get_connection() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        # Wire inventory checking and reservation
+        item = parsed.get("slots", {}).get("item")
+        inventory_reserved = False
+        if item and parsed["crew_required"]:
+            if not reserve_item(item, connection=connection):
+                parsed["crew_required"] = False
+                parsed["assigned_zone"] = None
+                parsed["status"] = "rejected"
+                alt = suggest_alternative(item)
+                if alt:
+                    parsed["action"] = f"Requested item '{item.replace('_', ' ').capitalize()}' is currently unavailable. Recommended alternative: '{alt.replace('_', ' ').capitalize()}'."
+                else:
+                    parsed["action"] = f"Requested item '{item.replace('_', ' ').capitalize()}' is currently unavailable."
             else:
-                parsed["action"] = f"Requested item '{item.replace('_', ' ').capitalize()}' is currently unavailable."
-        else:
-            parsed["action"] = f"Confirmed: 1x '{item.replace('_', ' ').capitalize()}' allocated from galley inventory. {parsed['action']}"
+                inventory_reserved = True
+                parsed["action"] = f"Confirmed: 1x '{item.replace('_', ' ').capitalize()}' allocated from galley inventory. {parsed['action']}"
 
-    # Wire announcement history lookup
-    if parsed["intent"] == "missed_announcement":
-        try:
-            from backend.database import list_announcements
-            speaker_filter = "Captain" if "captain" in payload.text.lower() else None
-            matched = list_announcements(speaker=speaker_filter, limit=1, flight_id=flight_id)
-            if matched:
-                latest = matched[0]
-                parsed["action"] = f"{latest['speaker']} ({latest['timestamp']}): \"{latest['text']}\""
-            else:
-                parsed["action"] = "No recent announcements matching your query were found."
-        except Exception as e:
-            logger.error(f"Unable to retrieve announcements: {e}", exc_info=True)
-            parsed["action"] = "Unable to retrieve announcements due to a server error."
+        # Wire announcement history lookup
+        if parsed["intent"] == "missed_announcement":
+            try:
+                from backend.database import list_announcements
+                speaker_filter = "Captain" if "captain" in payload.text.lower() else None
+                matched = list_announcements(speaker=speaker_filter, limit=1, flight_id=flight_id)
+                if matched:
+                    latest = matched[0]
+                    parsed["action"] = f"{latest['speaker']} ({latest['timestamp']}): \"{latest['text']}\""
+                else:
+                    parsed["action"] = "No recent announcements matching your query were found."
+            except Exception as e:
+                logger.error(f"Unable to retrieve announcements: {e}", exc_info=True)
+                parsed["action"] = "Unable to retrieve announcements due to a server error."
 
-    zone = parsed["assigned_zone"]
-    if not zone:
-        zone = seat_to_zone(payload.seat)
+        zone = parsed["assigned_zone"]
+        if not zone:
+            zone = seat_to_zone(payload.seat)
 
-    insert_task(
-        seat=parsed["seat"],
-        zone=zone,
-        intent=parsed["intent"],
-        urgency=parsed["urgency"],
-        status=parsed["status"],
-        action=parsed["action"],
-        flight_id=flight_id,
-    )
+        insert_task(
+            seat=parsed["seat"],
+            zone=zone,
+            intent=parsed["intent"],
+            urgency=parsed["urgency"],
+            status=parsed["status"],
+            action=parsed["action"],
+            flight_id=flight_id,
+            inventory_item=item,
+            inventory_reserved=inventory_reserved,
+            connection=connection,
+        )
 
     await event_manager.broadcast({"topic": "tasks", "action": "update"})
+    if item:
+        await event_manager.broadcast({"topic": "inventory", "action": "update"})
     return parsed
 
 # Passenger Specific Requests Retrieval
@@ -340,7 +340,7 @@ def get_announcements(flight_id: str = "APX-001") -> list[dict]:
 def get_booking_details(seat: str, token_data: dict = Depends(require_crew)) -> dict:
     try:
         from backend.database import get_booking_by_seat
-        booking = get_booking_by_seat(seat)
+        booking = get_booking_by_seat(seat, flight_id=token_data.get("permitted_flights", ["APX-001"])[0])
         if not booking:
             raise HTTPException(status_code=404, detail=f"No booking found for seat {seat}")
         return {
@@ -385,9 +385,10 @@ def analytics_summary(token_data: dict = Depends(require_crew)) -> dict:
 async def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
     try:
         from backend.database import clear_all_tasks
-        clear_all_tasks()
+        flight_id = token_data.get("permitted_flights", ["APX-001"])[0]
+        clear_all_tasks(flight_id=flight_id)
         await event_manager.broadcast({"topic": "tasks", "action": "update"})
-        return {"status": "success", "message": "All passenger requests cleared and inventory reset."}
+        return {"status": "success", "message": "Passenger request history cleared for this flight."}
     except Exception as exc:
         logger.error(f"Error clearing tasks: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error clearing tasks")
@@ -401,6 +402,7 @@ async def accept_task(task_id: int, token_data: dict = Depends(require_crew)) ->
         if not success:
             raise HTTPException(status_code=404, detail="Task not found or unable to accept")
         await event_manager.broadcast({"topic": "tasks", "action": "update"})
+        await event_manager.broadcast({"topic": "inventory", "action": "update"})
         return {"status": "success", "message": f"Task {task_id} accepted"}
     except HTTPException:
         raise
@@ -420,6 +422,7 @@ async def complete_task(task_id: int, token_data: dict = Depends(require_crew)) 
         if not success:
             raise HTTPException(status_code=404, detail="Task not found or unable to complete")
         await event_manager.broadcast({"topic": "tasks", "action": "update"})
+        await event_manager.broadcast({"topic": "inventory", "action": "update"})
         return {"status": "success", "message": f"Task {task_id} completed"}
     except HTTPException:
         raise
@@ -466,7 +469,7 @@ def get_inventory(token_data: dict = Depends(require_crew)) -> list[dict]:
 
 # POST Inventory Restock - Crew Only  
 @app.post("/crew/inventory/restock")
-def restock_inventory(
+async def restock_inventory(
     item: str,
     quantity: int = Query(10, ge=1, le=100),
     token_data: dict = Depends(require_crew)
@@ -476,6 +479,7 @@ def restock_inventory(
         new_stock = restock_inventory_item(item, quantity)
         if new_stock is None:
             raise HTTPException(status_code=404, detail=f"Item '{item}' not found in inventory")
+        await event_manager.broadcast({"topic": "inventory", "action": "update"})
         return {"status": "success", "item": item, "new_stock": new_stock}
     except HTTPException:
         raise
@@ -487,7 +491,8 @@ def restock_inventory(
 @app.post("/transcribe")
 def transcribe_audio(
     file: UploadFile = File(...),
-    _ = Depends(request_limiter)
+    _ = Depends(request_limiter),
+    token_data: dict = Depends(require_role(["passenger"]))
 ) -> dict:
     try:
         max_size = 5 * 1024 * 1024  # 5MB
@@ -537,10 +542,14 @@ def transcribe_audio(
             chunks.append(chunk)
             
         content = b"".join(chunks)
-        text = transcribe_audio_stub(content)
+        text = transcribe_audio_bytes(content)
         return {"status": "success", "text": text}
     except HTTPException:
         raise
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
         logger.error(f"Error transcribing audio: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail="Audio transcription failed")

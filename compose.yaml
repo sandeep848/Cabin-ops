@@ -1,0 +1,38 @@
+services:
+  backend:
+    build: .
+    environment:
+      ENV: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      CREW_USERNAME: ${CREW_USERNAME:-crew}
+      CREW_PASSWORD: ${CREW_PASSWORD:?Set CREW_PASSWORD in .env}
+      CABINOPS_DB_PATH: /data/cabinops.db
+    volumes:
+      - cabinops-data:/data
+    restart: unless-stopped
+  passenger:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        PORTAL: passenger_screen
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+  crew:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        PORTAL: crew_dashboard
+    ports:
+      - "127.0.0.1:5174:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  cabinops-data:

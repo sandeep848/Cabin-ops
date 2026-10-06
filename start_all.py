@@ -1,20 +1,5 @@
 #!/usr/bin/env python3
-r"""
-CabinOps AI startup launcher for all services.
-
-Place this file here:
-    C:\Users\Sandip\OneDrive\Desktop\CV\cabinops-ai\start_all.py
-
-Run:
-    conda activate CV
-    cd C:\Users\Sandip\OneDrive\Desktop\CV\cabinops-ai
-    python start_all.py
-
-Optional:
-    python start_all.py --backend-only
-    python start_all.py --no-browser
-    python start_all.py --backend-port 8000 --passenger-port 5173 --crew-port 5174
-"""
+r"""Start the CabinOps development API and passenger/crew portals."""
 
 from __future__ import annotations
 
@@ -127,7 +112,6 @@ def check_python_imports(env: dict[str, str]) -> None:
     venv_paths = [
         ROOT / ".venv" / "Scripts" / "python.exe" if os.name == "nt" else ROOT / ".venv" / "bin" / "python",
         ROOT / "venv" / "Scripts" / "python.exe" if os.name == "nt" else ROOT / "venv" / "bin" / "python",
-        Path(r"C:\Users\Sandip\.vscode\anaconda\envs\CV\python.exe")
     ]
 
     cv_python = None
@@ -242,7 +226,7 @@ def start_frontend(env: dict[str, str], folder_name: str, display_name: str, fro
     if not node_modules.exists():
         print(f"[SETUP] Installing {display_name} packages with npm install...")
         result = subprocess.run(
-            ["npm", "install"],
+            ["npm", "ci"],
             cwd=frontend_dir,
             env=env,
             shell=(os.name == "nt"),
@@ -377,7 +361,7 @@ def main() -> int:
         import secrets
         ephemeral_secret = secrets.token_hex(32)
         env["SECRET_KEY"] = ephemeral_secret
-        print(f"[INFO] No SECRET_KEY found in environment. Generated ephemeral session secret: {ephemeral_secret}")
+        print("[INFO] Generated an ephemeral development session secret.")
     # Provide the backend port for Vite's proxy configs
     env["VITE_BACKEND_PORT"] = str(args.backend_port)
 

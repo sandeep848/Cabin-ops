@@ -12,7 +12,7 @@ export default function Header({ flight_phase, authedSeat, openSeatPicker, isCon
           <span className="header-brand-icon">
             <IconPlane size={16} />
           </span>
-          <span className="header-brand-name">ApexAir</span>
+          <span className="header-brand-name">CabinOps</span>
         </div>
 
         {/* Center: phase pill */}

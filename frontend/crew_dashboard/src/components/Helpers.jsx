@@ -23,7 +23,7 @@ export const getIntentLabel = (intent) => INTENT_LABELS[intent] || 'Crew Call';
 export const ZONE_LABELS = { fore_cabin: 'Fore', mid_cabin: 'Mid', aft_cabin: 'Aft' };
 
 export const PHASES = ['boarding', 'taxi', 'takeoff', 'cruise', 'landing_preparation', 'landing'];
-export const RESTRICTED_PHASES = new Set(['takeoff', 'landing_preparation', 'landing']);
+export const RESTRICTED_PHASES = new Set(['boarding', 'taxi', 'takeoff', 'landing_preparation', 'landing']);
 
 export const SEAT_COLS = ['A', 'B', 'C', 'D', 'E', 'F'];
 export const TOTAL_ROWS = 30;
