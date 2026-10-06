@@ -9,7 +9,7 @@ python -c "import secrets; print(secrets.token_hex(32))"
 docker compose up --build --wait
 ```
 
-The backend is private to the internal Compose network. Passenger and crew Nginx bind loopback ports 5173 and 5174. Place an HTTPS reverse proxy with operator-managed certificates in front of them. Production media cookies require HTTPS. Keep passenger access separate from operator/crew access through the network admission policy; API role checks still apply.
+The backend is private to the internal Compose network. Only the Nginx portals also join the ingress bridge, and frontend health checks verify actual HTTP readiness. Passenger and crew Nginx bind loopback ports 5173 and 5174. Place an HTTPS reverse proxy with operator-managed certificates in front of them. Production media cookies require HTTPS. Keep passenger access separate from operator/crew access through the network admission policy; API role checks still apply.
 
 Read-only containers use writable `/tmp` mounts and a persistent `/data` database volume. Run one backend worker. `docker compose down` preserves the volume; `down -v` destroys it. Do not expose FastAPI directly or add arbitrary outbound connectivity. The standard application uses local media and no external recommendation service.
 

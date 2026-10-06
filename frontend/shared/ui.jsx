@@ -28,11 +28,13 @@ export async function api(path, token, options = {}) {
   if (!response.ok) {
     if (response.status === 401 && token)
       window.dispatchEvent(new Event("session-expired"));
-    throw new Error(
+    const error = new Error(
       typeof data.detail === "string"
         ? data.detail
         : `Unable to complete this operation (${response.status}).`,
     );
+    error.status = response.status;
+    throw error;
   }
   return data;
 }
@@ -88,6 +90,10 @@ export function useCabinData(token, flight, passengerSeat) {
       setConnected(true);
     } catch (failure) {
       if (current !== generation.current) return;
+      if (failure.status === 403) {
+        window.dispatchEvent(new Event("session-expired"));
+        return;
+      }
       setError(failure.message);
       setConnected(false);
     } finally {

@@ -23,6 +23,7 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
+from starlette.background import BackgroundTask
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -173,9 +174,9 @@ def health() -> dict:
 @app.get("/events")
 async def events_endpoint(token_data: dict = Depends(get_current_token_data)):
     flight_id = authorized_flight(token_data)
+    queue = event_manager.subscribe(flight_id, token_data["jti"])
 
     async def event_generator():
-        queue = event_manager.subscribe(flight_id, token_data["jti"])
         try:
             yield 'data: {"status":"connected"}\n\n'
             while True:
@@ -203,6 +204,7 @@ async def events_endpoint(token_data: dict = Depends(get_current_token_data)):
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
+        background=BackgroundTask(event_manager.unsubscribe, queue),
         headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
     )
 
@@ -324,6 +326,8 @@ async def update_flight_context(
             {"flight_id": flight_id, "topic": "flight_context", "action": "update"}
         )
         return {"status": "success", "flight_context": ctx_dict}
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error(f"Error updating flight context: {exc}", exc_info=True)
         raise HTTPException(
@@ -625,6 +629,8 @@ def analytics_summary(token_data: dict = Depends(require_crew)) -> dict:
     try:
         flight_id = authorized_flight(token_data)
         return get_analytics(flight_id=flight_id)
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error(f"Error aggregating analytics: {exc}", exc_info=True)
         raise HTTPException(
@@ -650,6 +656,8 @@ async def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
             "status": "success",
             "message": "Passenger request history cleared for this flight.",
         }
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error(f"Error clearing tasks: {exc}", exc_info=True)
         raise HTTPException(

@@ -1,6 +1,6 @@
 # Architecture
 
-Two React portals use same-origin Nginx proxies to a FastAPI cabin-edge service. SQLite WAL stores flight-scoped operational state. Entertainment assets are local immutable files; playback needs no public internet service.
+Two React portals use same-origin Nginx proxies to a FastAPI cabin-edge service. The portals join a loopback-published ingress bridge and a separate internal backend network; the backend joins only the internal network. SQLite WAL stores flight-scoped operational state. Entertainment assets are local immutable files; playback needs no public internet service.
 
 ```mermaid
 flowchart TD

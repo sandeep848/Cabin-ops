@@ -22,6 +22,11 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         PORTAL: passenger_screen
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     ports:
       - "127.0.0.1:5173:8080"
     depends_on:
@@ -32,7 +37,7 @@ services:
       - /tmp
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
-    networks: [cabin]
+    networks: [cabin, ingress]
     restart: unless-stopped
   crew:
     build:
@@ -40,6 +45,11 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         PORTAL: crew_dashboard
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     ports:
       - "127.0.0.1:5174:8080"
     depends_on:
@@ -50,7 +60,7 @@ services:
       - /tmp
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
-    networks: [cabin]
+    networks: [cabin, ingress]
     restart: unless-stopped
 volumes:
   cabinops-data:
@@ -58,3 +68,5 @@ volumes:
 networks:
   cabin:
     internal: true
+  ingress:
+    driver: bridge

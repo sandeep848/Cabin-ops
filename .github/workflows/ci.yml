@@ -38,6 +38,12 @@ jobs:
           except urllib.error.HTTPError as error:
               assert error.code == 401
           PYCODE
+      - name: Diagnose failed production startup
+        if: failure()
+        run: docker compose logs --no-color --tail=100
+        env:
+          SECRET_KEY: ci-only-signing-key-not-for-real-deployment
+          CREW_PASSWORD: ci-only-crew-password
       - run: docker compose down
         if: always()
         env:

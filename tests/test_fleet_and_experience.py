@@ -453,3 +453,14 @@ def test_closed_flight_revokes_passenger_and_clears_only_media(monkeypatch):
             ).fetchone()[0]
             == "closed"
         )
+
+
+def test_stream_capacity_failure_is_an_http_error_not_a_broken_stream(monkeypatch):
+    from fastapi import HTTPException
+
+    def full(*args):
+        raise HTTPException(status_code=503, detail="Capacity reached")
+
+    monkeypatch.setattr("backend.main.event_manager.subscribe", full)
+    response = client.get("/events", headers=headers())
+    assert response.status_code == 503

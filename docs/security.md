@@ -20,7 +20,7 @@ Passenger service messages, passenger names, booking credentials, crew credentia
 | Request flooding and memory growth | Per-principal throttling, bounded JSON/multipart bodies, capped event queues/subscribers, constrained input models |
 | SQL injection and duplicate allocation | Parameterized SQL and transactional conditional updates; concurrent reservation/retry tests |
 | XSS and embedding | React text escaping, same-origin CSP, no remote scripts, framing denial and nosniff headers |
-| Container privilege | Unprivileged users, read-only root filesystems, dropped capabilities, no-new-privileges and an internal Compose network |
+| Container privilege | Unprivileged users, read-only root filesystems, dropped capabilities, no-new-privileges and an internal backend network with a separate portal ingress bridge |
 | Excess entertainment tracking | No external analytics; optional position saving; seat-scoped deletion; aggregate recent device health only |
 
 Validation errors omit supplied input values. The media manifest validates filenames and checksum structure; startup checks local asset hashes. Operator SVG/media ingestion must use trusted, reviewed files. Schema validation is not a sanitizer for arbitrary operator-authored media.
