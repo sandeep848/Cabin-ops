@@ -1,5 +1,7 @@
 # Changelog
 
-## 1.0.0
+## 2.0.0
+Rebuilt passenger and crew interfaces around clear service workflows. Added duplicate-safe request receipts, concurrent retry protection, crew ownership and timestamps, acknowledgement metrics, audited operational changes, database readiness, and a session outbox for routine requests. Removed 3D prototype code and external fonts. Added airline integration boundaries, portfolio guidance, and expanded tests.
 
-Unified CabinOps branding, portable setup, containerized portals, environment configuration, and CI. Fixed production demo authentication, flight-scoped request clearing, inventory preservation, authoritative flight state, fabricated speech fallback, crew action errors, delayed-task visibility, and responsive/accessibility behavior. Added isolated regression tests and documented deployment limits.
+## 1.0.0
+Added portable setup, production containers, authenticated operations, transactional inventory reservations, booking provisioning, credential rotation, and CI.

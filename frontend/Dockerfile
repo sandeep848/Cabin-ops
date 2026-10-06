@@ -4,6 +4,7 @@ WORKDIR /app
 COPY frontend/${PORTAL}/package*.json ./
 RUN npm ci
 COPY frontend/${PORTAL}/ ./
+COPY frontend/shared/ /shared/
 RUN npm run build
 FROM nginx:stable-alpine
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf

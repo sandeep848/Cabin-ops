@@ -1,6 +1,10 @@
-# CabinOps
+# Cabin Service Operations
 
-Passenger service requests and cabin crew operations, built with FastAPI, React, and SQLite. Passengers submit text or browser speech requests; crew manage queues, flight phases, announcements, and galley inventory. A deterministic intent parser routes requests by seat zone. This is a deployable single-flight demonstration, not a certified aircraft safety system.
+A self-hosted passenger-to-crew service platform for a bounded cabin deployment. Two focused React interfaces support service requests, staff ownership, flight context, inventory, announcements, and operational audit history.
+
+**Core engineering:** transactional retry deduplication, inventory consistency, crew ownership, acknowledgement metrics, a passenger session outbox, authenticated API access, and end-to-end Docker/browser verification.
+
+This release is suitable for portfolio demonstrations and controlled pilot evaluation. Airline operational acceptance requires integrations and validation described in [the airline integration plan](docs/airline-integration.md).
 
 ## Local setup
 
@@ -83,4 +87,13 @@ frontend/crew_dashboard/node_modules/.bin/playwright install chromium
 node tests/browser-smoke.mjs
 ```
 
-The service buttons and 2D seat map remain available without WebGL. Heavy 3D modules load only when requested.
+The interface uses system fonts and lightweight HTML controls. Service requests, seat inspection, galley stock, broadcasts, audit history, and flight settings have dedicated workspaces. No 3D or external font dependencies are required.
+
+## Product and engineering documentation
+
+- [Architecture and tradeoffs](docs/architecture.md)
+- [Airline integration and acceptance boundary](docs/airline-integration.md)
+- [Portfolio and resume guidance](docs/resume.md)
+- [Product requirements](PRD.md)
+
+Passengers can save a nonurgent request when offline. It remains undelivered until they explicitly send it after reconnecting. Requests use stable UUID keys; retries return the same server receipt. The outbox is limited to 20 requests and is cleared on sign-out. Crew actions record ownership and timestamps, and Activity exposes an operational history. These application audit records are not a tamper-proof regulatory audit system.

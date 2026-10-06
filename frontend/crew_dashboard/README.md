@@ -1,4 +1,4 @@
-# CabinOps crew console
+# Cabin Service Operations crew workspace
 
 React portal for flight settings, request acceptance/completion, galley inventory, announcements, and cabin seat inspection.
 

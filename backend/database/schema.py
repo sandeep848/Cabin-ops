@@ -28,6 +28,22 @@ def init_db() -> None:
             conn.execute("ALTER TABLE tasks ADD COLUMN inventory_item TEXT")
         if "inventory_reserved" not in columns:
             conn.execute("ALTER TABLE tasks ADD COLUMN inventory_reserved INTEGER NOT NULL DEFAULT 0")
+        for column in ["accepted_at", "completed_at", "assigned_to", "request_text", "input_modality"]:
+            if column not in columns:
+                conn.execute(f"ALTER TABLE tasks ADD COLUMN {column} TEXT")
+        conn.execute("""CREATE TABLE IF NOT EXISTS audit_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            flight_id TEXT NOT NULL, task_id INTEGER, actor TEXT NOT NULL,
+            event TEXT NOT NULL, detail TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+        )""")
+        conn.execute("CREATE INDEX IF NOT EXISTS audit_flight_task ON audit_events(flight_id, task_id, id)")
+        conn.execute("""CREATE TABLE IF NOT EXISTS request_receipts (
+            flight_id TEXT NOT NULL, seat TEXT NOT NULL, request_key TEXT NOT NULL,
+            payload_hash TEXT NOT NULL, response TEXT NOT NULL, task_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+            PRIMARY KEY(flight_id, seat, request_key)
+        )""")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status_created ON tasks (status, created_at);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_seat_created ON tasks (seat, created_at);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_zone_status ON tasks (zone, status);")

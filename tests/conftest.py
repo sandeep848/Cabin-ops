@@ -21,4 +21,6 @@ def isolated_state():
     with get_connection() as conn:
         conn.execute("DELETE FROM tasks")
         conn.execute("DELETE FROM announcements")
+        conn.execute("DELETE FROM audit_events")
+        conn.execute("DELETE FROM request_receipts")
     yield

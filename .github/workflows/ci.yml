@@ -1,4 +1,4 @@
-name: CabinOps CI
+name: Cabin Service Operations CI
 on: [push, pull_request]
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
               with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/health') as response:
                   assert json.load(response)['status'] == 'ok'
               with urllib.request.urlopen(f'http://127.0.0.1:{port}/') as response:
-                  assert b'CabinOps' in response.read()
+                  assert b'Cabin Service Operations' in response.read()
           request = urllib.request.Request('http://127.0.0.1:5173/api/auth/passenger', data=json.dumps({'seat': '22A', 'booking_reference': 'DEMO'}).encode(), headers={'Content-Type': 'application/json'})
           try:
               urllib.request.urlopen(request)

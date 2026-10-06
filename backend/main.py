@@ -3,9 +3,12 @@ import json
 import asyncio
 import logging
 import os
+import hashlib
+import uuid
+import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Depends, Security, status, File, UploadFile, Query, Request
+from fastapi import FastAPI, HTTPException, Depends, Security, status, File, UploadFile, Query, Request, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
@@ -64,7 +67,7 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
 
-app = FastAPI(title="CabinOps API", lifespan=lifespan)
+app = FastAPI(title="Cabin Service Operations API", version="2.0.0", lifespan=lifespan)
 app.mount("/project-docs", StaticFiles(directory=str(__import__("pathlib").Path(__file__).resolve().parent.parent / "docs")), name="project-docs")
 
 # Environment CORS settings
@@ -90,7 +93,11 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
+    started = time.monotonic()
     response = await call_next(request)
+    response.headers["X-Request-ID"] = str(uuid.uuid4())
+    logger.info("request method=%s path=%s status=%s duration_ms=%.1f request_id=%s", request.method, request.url.path, response.status_code, (time.monotonic()-started)*1000, response.headers["X-Request-ID"])
+    response.headers["Server-Timing"] = f"app;dur={(time.monotonic()-started)*1000:.1f}"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-XSS-Protection"] = "1; mode=block"
@@ -210,7 +217,7 @@ async def update_flight_context(payload: FlightContext, token_data: dict = Depen
     try:
         flight_id = token_data.get("flight_id") or (token_data.get("permitted_flights", ["APX-001"])[0] if token_data.get("permitted_flights") else "APX-001")
         ctx_dict = payload.model_dump()
-        update_db_flight_context(ctx_dict, flight_id)
+        update_db_flight_context(ctx_dict, flight_id, actor=token_data.get("username", "crew"))
         await event_manager.broadcast({"topic": "flight_context", "action": "update"})
         return {"status": "success", "flight_context": ctx_dict}
     except Exception as exc:
@@ -221,6 +228,7 @@ async def update_flight_context(payload: FlightContext, token_data: dict = Depen
 @app.post("/request", response_model=ParsedRequest)
 async def create_request(
     payload: PassengerRequest,
+    idempotency_key: str | None = Header(None, max_length=128, min_length=8),
     _ = Depends(request_limiter),
     token_data: dict = Depends(require_role(["passenger"]))
 ) -> dict:
@@ -252,6 +260,13 @@ async def create_request(
     # A reservation and its request record commit together, or roll back together.
     with get_connection() as connection:
         connection.execute("BEGIN IMMEDIATE")
+        payload_hash = hashlib.sha256(payload.model_dump_json().encode()).hexdigest()
+        if idempotency_key:
+            receipt = connection.execute("SELECT payload_hash, response FROM request_receipts WHERE flight_id = ? AND seat = ? AND request_key = ?", (flight_id, payload.seat, idempotency_key)).fetchone()
+            if receipt:
+                if receipt["payload_hash"] != payload_hash:
+                    raise HTTPException(status_code=409, detail="Request key was already used for different content")
+                return json.loads(receipt["response"])
         # Wire inventory checking and reservation
         item = parsed.get("slots", {}).get("item")
         inventory_reserved = False
@@ -288,7 +303,7 @@ async def create_request(
         if not zone:
             zone = seat_to_zone(payload.seat)
 
-        insert_task(
+        task_id = insert_task(
             seat=parsed["seat"],
             zone=zone,
             intent=parsed["intent"],
@@ -299,7 +314,15 @@ async def create_request(
             inventory_item=item,
             inventory_reserved=inventory_reserved,
             connection=connection,
+            request_text=payload.text,
+            input_modality=payload.input_modality,
         )
+
+        parsed["task_id"] = task_id
+        from backend.services.operations import append_audit
+        append_audit(connection, flight_id, "passenger:" + payload.seat, "request.created", parsed["intent"] + " · " + parsed["status"], task_id)
+        if idempotency_key:
+            connection.execute("INSERT INTO request_receipts (flight_id, seat, request_key, payload_hash, response, task_id) VALUES (?, ?, ?, ?, ?, ?)", (flight_id, payload.seat, idempotency_key, payload_hash, json.dumps(parsed), task_id))
 
     await event_manager.broadcast({"topic": "tasks", "action": "update"})
     if item:
@@ -366,7 +389,7 @@ def crew_tasks(
 ) -> list[dict]:
     try:
         flight_id = token_data.get("flight_id") or (token_data.get("permitted_flights", ["APX-001"])[0] if token_data.get("permitted_flights") else "APX-001")
-        return list_tasks(status=status, seat=seat, zone=zone, limit=limit, offset=offset, flight_id=flight_id)
+        return list_tasks(status=status, seat=seat, zone=zone, limit=limit, offset=offset, flight_id=flight_id, prioritize=True)
     except Exception as exc:
         logger.error(f"Error fetching crew tasks: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error fetching tasks")
@@ -383,6 +406,8 @@ def analytics_summary(token_data: dict = Depends(require_crew)) -> dict:
 
 @app.post("/crew/tasks/clear")
 async def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
+    if os.getenv("ENV") == "production":
+        raise HTTPException(status_code=403, detail="Request history cannot be cleared in production")
     try:
         from backend.database import clear_all_tasks
         flight_id = token_data.get("permitted_flights", ["APX-001"])[0]
@@ -398,7 +423,7 @@ async def clear_tasks(token_data: dict = Depends(require_crew)) -> dict:
 async def accept_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
     try:
         permitted = token_data.get("permitted_flights", [])
-        success = update_task_status(task_id, "accepted", permitted_flights=permitted)
+        success = update_task_status(task_id, "accepted", permitted_flights=permitted, actor=token_data.get("username", "crew"))
         if not success:
             raise HTTPException(status_code=404, detail="Task not found or unable to accept")
         await event_manager.broadcast({"topic": "tasks", "action": "update"})
@@ -418,7 +443,7 @@ async def accept_task(task_id: int, token_data: dict = Depends(require_crew)) ->
 async def complete_task(task_id: int, token_data: dict = Depends(require_crew)) -> dict:
     try:
         permitted = token_data.get("permitted_flights", [])
-        success = update_task_status(task_id, "completed", permitted_flights=permitted)
+        success = update_task_status(task_id, "completed", permitted_flights=permitted, actor=token_data.get("username", "crew"))
         if not success:
             raise HTTPException(status_code=404, detail="Task not found or unable to complete")
         await event_manager.broadcast({"topic": "tasks", "action": "update"})
@@ -449,6 +474,7 @@ async def post_announcement(
             speaker=payload.speaker,
             text=payload.text,
             timestamp=timestamp,
+            actor=token_data.get("username", "crew"),
             flight_id=flight_id
         )
         await event_manager.broadcast({"topic": "announcements", "action": "update"})
@@ -476,7 +502,7 @@ async def restock_inventory(
 ) -> dict:
     try:
         from backend.database import restock_inventory_item
-        new_stock = restock_inventory_item(item, quantity)
+        new_stock = restock_inventory_item(item, quantity, flight_id=token_data.get("permitted_flights", ["APX-001"])[0], actor=token_data.get("username", "crew"))
         if new_stock is None:
             raise HTTPException(status_code=404, detail=f"Item '{item}' not found in inventory")
         await event_manager.broadcast({"topic": "inventory", "action": "update"})
@@ -553,3 +579,26 @@ def transcribe_audio(
     except Exception as exc:
         logger.error(f"Error transcribing audio: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail="Audio transcription failed")
+
+
+@app.get("/ready")
+def readiness():
+    from backend.database.connection import get_connection
+    try:
+        with get_connection() as conn:
+            conn.execute("SELECT COUNT(*) FROM tasks").fetchone()
+        return {"status": "ready", "database": "reachable"}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Database is unavailable") from exc
+
+
+@app.get("/crew/operations")
+def crew_operations(token_data: dict = Depends(require_crew)):
+    from backend.services.operations import operational_summary
+    return operational_summary(token_data.get("permitted_flights", ["APX-001"])[0])
+
+
+@app.get("/crew/audit")
+def crew_audit(task_id: int | None = None, limit: int = Query(200, ge=1, le=1000), token_data: dict = Depends(require_crew)):
+    from backend.services.operations import audit_history
+    return audit_history(token_data.get("permitted_flights", ["APX-001"])[0], task_id, limit)

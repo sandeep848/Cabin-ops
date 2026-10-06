@@ -14,7 +14,7 @@ def apply_flight_rules(parsed: dict, flight_context: dict) -> dict:
     if intent in {"medical_assistance", "emergency", "allergy_question"}:
         return parsed_copy
 
-    # Phases where standard cabin service is suspended per FAA/IATA guidelines
+    # Phases where standard cabin service is suspended by the application policy
     RESTRICTED_PHASES = {"takeoff", "landing_preparation", "landing", "taxi", "boarding"}
 
     if phase in RESTRICTED_PHASES:

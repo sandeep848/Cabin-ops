@@ -1,22 +1,30 @@
-# CabinOps product requirements
+# Cabin Service Operations — PRD
 
-## Goal
-Provide a passenger-to-crew service workflow for one cabin deployment, with clear request state and flight-phase restrictions.
+## Problem
+Cabin teams need an orderly way to acknowledge routine passenger requests, preserve accountability, and cope with intermittent cabin network connectivity. Passenger calls alone do not provide a searchable service history or clearly communicate request progress.
 
-## Users and workflows
-- Passengers authenticate by seat and booking reference, submit requests, read announcements, and track completion.
-- Crew authenticate separately, review urgency and zones, accept or complete tasks, change flight context, restock inventory, and broadcast announcements.
+## Product
+A self-hosted service coordination application for one aircraft cabin. The passenger portal prepares and submits requests, shows delivery state, and stores nonurgent unsent requests in a session outbox. The crew workspace prioritizes requests, records ownership, exposes acknowledgement targets, and separates seat inspection, galley stock, announcements, flight context, and audit history.
+
+## Design decisions
+- Clear white work surfaces, restrained navy accents, system typography, and generous spacing.
+- A queue-first staff experience; operational controls live in their own workspaces.
+- Service buttons prepare a message; passengers explicitly submit it.
+- No animations, 3D decorations, fabricated operational data, or generated speech responses.
+- Urgent delivery failures direct passengers to the physical call button.
 
 ## Acceptance criteria
-- Unauthenticated users cannot access crew operations or submit requests.
-- Passenger tokens cannot submit or read another seat's requests.
-- Production disables demo passenger access and synthetic booking generation.
-- Requests persist in SQLite and stock reservations are atomic.
-- Clear-history operations affect the authorized flight and preserve inventory.
-- Speech failures never create invented requests.
-- Failed crew writes are visible; failed settings updates restore server state.
-- Both portals build with committed lockfiles and are served through a production proxy.
-- Tests use isolated data and CI verifies backend and frontend builds.
+- Signed passenger sessions are constrained to the authenticated seat.
+- Replaying an idempotency key returns the original receipt without consuming stock again; changed payloads return 409.
+- Concurrent submissions with the same key create one request.
+- Task ownership prevents other crew members completing assigned work.
+- Reservations, request receipts, and creation audit entries commit together.
+- Routine service restrictions are checked on the server.
+- Crew see open/urgent/in-progress/completed counts and per-request age.
+- Operational changes are audited without duplicating passenger messages or booking references.
+- Failed writes preserve form drafts and display errors.
+- An offline nonurgent request is clearly marked undelivered, survives a same-tab reload, and can be sent explicitly on reconnection.
+- Keyboard focus, dialog escape, mobile layouts, REST API workflows, and production containers are verified.
 
-## Scope limits
-Single deployment with flight APX-001, shared galley inventory, deterministic English parser, single-process events and rate limits. No aviation certification, automatic emergency response guarantee, distributed operation, or airline booking provider integration.
+## Intended use and limits
+Controlled demonstrations and airline service pilot evaluation. One flight APX-001, a fixed 30-row six-abreast seat layout, shared inventory, and one backend process. The product is not connected to flight control or aircraft safety systems. Emergency classification is an advisory signal, not a substitute for the physical call button or established crew procedures.

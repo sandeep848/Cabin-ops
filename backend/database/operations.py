@@ -68,20 +68,23 @@ def get_db_flight_context(flight_id: str = "APX-001") -> dict:
                 ctx[k] = v
         return ctx
 
-def update_db_flight_context(ctx: dict, flight_id: str = "APX-001") -> None:
+def update_db_flight_context(ctx: dict, flight_id: str = "APX-001", actor: str | None = None) -> None:
     with get_connection() as conn:
         for k, v in ctx.items():
             conn.execute(
                 "INSERT OR REPLACE INTO flight_context (flight_id, key, value) VALUES (?, ?, ?)",
                 (flight_id, k, str(v))
             )
+        if actor:
+            from backend.services.operations import append_audit
+            append_audit(conn, flight_id, actor, "flight.context_updated", ctx["flight_phase"])
         conn.commit()
 
-def insert_task(seat: str, zone: str, intent: str, urgency: str, status: str, action: str, flight_id: str = "APX-001", inventory_item=None, inventory_reserved=False, connection=None) -> int:
+def insert_task(seat: str, zone: str, intent: str, urgency: str, status: str, action: str, flight_id: str = "APX-001", inventory_item=None, inventory_reserved=False, connection=None, request_text="", input_modality="text") -> int:
     def insert(conn):
         cur = conn.execute(
-            "INSERT INTO tasks (flight_id, seat, zone, intent, urgency, status, action, inventory_item, inventory_reserved) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (flight_id, seat.upper(), zone, intent, urgency, status, action, inventory_item, int(inventory_reserved)),
+            "INSERT INTO tasks (flight_id, seat, zone, intent, urgency, status, action, inventory_item, inventory_reserved, request_text, input_modality) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (flight_id, seat.upper(), zone, intent, urgency, status, action, inventory_item, int(inventory_reserved), request_text, input_modality),
         )
         return int(cur.lastrowid)
     if connection is not None:
@@ -89,7 +92,7 @@ def insert_task(seat: str, zone: str, intent: str, urgency: str, status: str, ac
     with get_connection() as conn:
         return insert(conn)
 
-def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: int = 100, offset: int = 0, flight_id: str = "APX-001") -> list[dict]:
+def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: int = 100, offset: int = 0, flight_id: str = "APX-001", prioritize: bool = False) -> list[dict]:
     if limit is None or limit <= 0:
         limit = 100
     if offset is None or offset < 0:
@@ -100,7 +103,7 @@ def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: in
     
     if status is not None:
         if status == "active":
-            query += " AND status != 'completed'"
+            query += " AND status IN ('pending','urgent_pending','accepted','delayed')"
         else:
             query += " AND status = ?"
             params.append(status)
@@ -111,7 +114,10 @@ def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: in
         query += " AND zone = ?"
         params.append(zone)
     
-    query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
+    if prioritize:
+        query += " ORDER BY CASE WHEN status IN ('pending','urgent_pending','accepted','delayed') THEN 0 ELSE 1 END, CASE urgency WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, CASE WHEN status IN ('pending','urgent_pending','accepted','delayed') THEN id END ASC, id DESC LIMIT ? OFFSET ?"
+    else:
+        query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
     params.extend([limit, offset])
             
     with get_connection() as conn:
@@ -121,7 +127,7 @@ def list_tasks(status: str = None, seat: str = None, zone: str = None, limit: in
             task["created_at"] = task["created_at"].replace(" ", "T") + "Z"
         return result
 
-def update_task_status(task_id: int, new_status: str, permitted_flights: list[str] = None) -> bool:
+def update_task_status(task_id: int, new_status: str, permitted_flights: list[str] = None, actor: str = "crew") -> bool:
     if new_status not in VALID_STATUSES:
         raise ValueError(f"Invalid status: {new_status}")
         
@@ -144,6 +150,10 @@ def update_task_status(task_id: int, new_status: str, permitted_flights: list[st
         if not can_transition(current_status, new_status):
             raise ValueError(f"Illegal status transition from {current_status} to {new_status}")
             
+        if current_status == new_status:
+            return True
+        if row["assigned_to"] and row["assigned_to"] != actor and current_status == "accepted":
+            raise ValueError("Permission denied: this request is assigned to another crew member")
         # Enforce current service restrictions on the server, not only in UI.
         if new_status in {"accepted", "completed"} and current_status != new_status and row["urgency"] != "high":
             context = get_db_flight_context(task_flight_id)
@@ -155,6 +165,12 @@ def update_task_status(task_id: int, new_status: str, permitted_flights: list[st
             if not reserve_item(row["inventory_item"], connection=conn):
                 raise ValueError("Requested item is currently out of stock")
             conn.execute("UPDATE tasks SET inventory_reserved = 1 WHERE id = ?", (task_id,))
+        if new_status == "accepted":
+            conn.execute("UPDATE tasks SET accepted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), assigned_to = ? WHERE id = ?", (actor, task_id))
+        if new_status == "completed":
+            conn.execute("UPDATE tasks SET completed_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?", (task_id,))
+        from backend.services.operations import append_audit
+        append_audit(conn, task_flight_id, actor, "request." + new_status, current_status + " → " + new_status, task_id)
         cur = conn.execute(query, params)
         if cur.rowcount == 0:
             raise ValueError("Task changed concurrently; reload and retry")
@@ -163,6 +179,7 @@ def update_task_status(task_id: int, new_status: str, permitted_flights: list[st
 def clear_all_tasks(flight_id: str = "APX-001") -> None:
     with get_connection() as conn:
         conn.execute("DELETE FROM tasks WHERE flight_id = ?", (flight_id,))
+        conn.execute("DELETE FROM request_receipts WHERE flight_id = ?", (flight_id,))
         conn.commit()
     # Clearing request history must not replenish physical inventory.
 
@@ -239,12 +256,15 @@ def verify_booking(seat: str, booking_reference: str, flight_id: str = "APX-001"
         booking_reference.upper().encode("utf-8")
     )
 
-def add_announcement(speaker: str, text: str, timestamp: str, flight_id: str = "APX-001") -> int:
+def add_announcement(speaker: str, text: str, timestamp: str, flight_id: str = "APX-001", actor: str | None = None) -> int:
     with get_connection() as conn:
         cur = conn.execute(
             "INSERT INTO announcements (flight_id, timestamp, speaker, text) VALUES (?, ?, ?, ?)",
             (flight_id, timestamp, speaker, text)
         )
+        if actor:
+            from backend.services.operations import append_audit
+            append_audit(conn, flight_id, actor, "announcement.published", speaker)
         conn.commit()
         return int(cur.lastrowid)
 
@@ -253,7 +273,7 @@ def get_inventory_levels() -> list[dict]:
         rows = conn.execute("SELECT item, stock, alternative FROM inventory ORDER BY item").fetchall()
         return [dict(r) for r in rows]
 
-def restock_inventory_item(item: str, quantity: int) -> int | None:
+def restock_inventory_item(item: str, quantity: int, flight_id: str = "APX-001", actor: str | None = None) -> int | None:
     with get_connection() as conn:
         row = conn.execute("SELECT stock FROM inventory WHERE item = ?", (item.lower(),)).fetchone()
         if not row:
@@ -262,6 +282,9 @@ def restock_inventory_item(item: str, quantity: int) -> int | None:
             "UPDATE inventory SET stock = stock + ? WHERE item = ?",
             (quantity, item.lower())
         )
+        if actor:
+            from backend.services.operations import append_audit
+            append_audit(conn, flight_id, actor, "inventory.restocked", f"{item}: +{quantity}")
         conn.commit()
         new_row = conn.execute("SELECT stock FROM inventory WHERE item = ?", (item.lower(),)).fetchone()
         return new_row["stock"] if new_row else None

@@ -1,17 +1,9 @@
-# CabinOps technical report
+# Cabin Service Operations — technical release report
 
-CabinOps connects a React passenger portal and crew console to a FastAPI backend. Seat-specific signed sessions protect requests, crew credentials protect operations, and SQLite persists tasks, announcements, flight state, accounts, bookings, and inventory.
+The platform coordinates passenger requests, crew ownership, service restrictions, inventory, announcements, and audit history for one cabin. React clients use a FastAPI API with signed sessions and SQLite transactions. Text parsing is deterministic; optional browser speech is explicitly limited by browser support.
 
-The intent parser is deterministic and English-only. Seat rows 1–10 route to fore cabin, 11–20 to mid cabin, and 21–30 to aft cabin. Flight rules delay noncritical service requests during configured restrictions. Medical and emergency requests retain critical routing.
+Engineering evidence includes regression tests for concurrent idempotent retries, inventory rollback, staff ownership, audit isolation, production authentication, and the complete request lifecycle. Browser CI covers mobile layouts, failed-write drafts, navigation, offline retry, focus behavior, and live updates. Production CI builds and boots the complete Compose stack and checks both proxies.
 
-The backend supplies event notifications to both portals, with polling fallback. Production frontends use Nginx to serve compiled assets and proxy `/api`. The deployment supports one backend worker; distributed state is outside this release.
+Bundled parser evaluation still measures 510 synthetic dataset rows, including repeated examples; perfect agreement with those annotations does not establish generalization or safety compliance.
 
-## Evaluation
-
-The bundled dataset contains 510 rows, including repeated utterances. Local evaluation on the release changes produced 510/510 matches for intent, urgency, and crew-required labels. These scores measure agreement with the bundled annotations and do not establish generalization or safety compliance.
-
-Backend checks include authentication denial, seat isolation, production demo denial, inventory preservation, flight-scoped history clearing, and passenger submission through crew acceptance and completion. See CI for the current test count and build results.
-
-## Operational limits
-
-No external airline booking integration, per-flight inventory segregation, formal aviation validation, or distributed event broker. Optional server speech requires Whisper and FFmpeg. Browser speech depends on browser support and permission, and failures remain explicit. Real emergencies require direct contact with cabin crew.
+Deployment is bounded to one configured flight and one API process. Operator integrations, independent security assessment, aircraft hardware testing, and regulatory applicability review are required before airline operational use. See architecture.md and airline-integration.md.

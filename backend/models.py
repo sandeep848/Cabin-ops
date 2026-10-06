@@ -23,6 +23,7 @@ class PassengerRequest(BaseModel):
         return v
 
 class ParsedRequest(BaseModel):
+    task_id: int | None = None
     seat: str
     intent: str
     urgency: Urgency
