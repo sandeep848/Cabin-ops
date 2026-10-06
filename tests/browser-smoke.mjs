@@ -1,3 +1,4 @@
+import axe from "../frontend/crew_dashboard/node_modules/axe-core/axe.js";
 /** Browser integration test using isolated local services and temporary SQLite state. */
 import { chromium } from "../frontend/crew_dashboard/node_modules/playwright/index.mjs";
 import { spawn } from "node:child_process";
@@ -173,6 +174,33 @@ try {
   await crew.getByRole("button", { name: "Activity", exact: true }).click();
   await crew.getByText("Request Created", { exact: true }).first().waitFor();
   await crew.getByRole("button", { name: /^Requests/ }).click();
+  await crew
+    .getByRole("button", { name: "Flight settings", exact: true })
+    .click();
+  await crew.locator("#landing-minutes").fill("44");
+  await crew.getByRole("button", { name: "Refresh", exact: true }).click();
+  assert.equal(
+    await crew.locator("#landing-minutes").inputValue(),
+    "44",
+    "A background refresh must preserve unsaved settings",
+  );
+  await crew.getByRole("button", { name: /^Requests/ }).click();
+  for (const page of [passenger, crew]) {
+    await page.addScriptTag({ content: axe.source });
+    const results = await page.evaluate(async () =>
+      window.axe.run(document, {
+        runOnly: { type: "tag", values: ["wcag2a", "wcag2aa"] },
+      }),
+    );
+    assert.deepEqual(
+      results.violations.map((item) => ({
+        id: item.id,
+        nodes: item.nodes.map((node) => node.target),
+      })),
+      [],
+      "Accessibility violations",
+    );
+  }
   assert.deepEqual(errors, []);
   await mkdir(join(root, "test-results"), { recursive: true });
   await passenger.screenshot({

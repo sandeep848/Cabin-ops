@@ -9,7 +9,7 @@
   background: #f4f5f7;
   font-synthesis: none;
   --navy: #15293c;
-  --muted: #667482;
+  --muted: #596b7a;
   --line: #e2e7eb;
   --accent: #245679;
 }
@@ -84,7 +84,7 @@ small {
   font-size: 10px;
   letter-spacing: 1.5px;
   font-weight: 700;
-  color: #687c8d;
+  color: #596b7a;
   margin-bottom: 12px;
 }
 .brand {
@@ -232,7 +232,7 @@ small {
   display: grid;
   place-items: center;
   margin: 0 auto 18px;
-  color: #8e9daa;
+  color: #596b7a;
 }
 .empty h3 {
   font-weight: 500;
@@ -274,7 +274,7 @@ small {
   margin: 38px 0 8px;
   font-size: 10px;
   letter-spacing: 0.2px;
-  color: #8b959e;
+  color: #596b7a;
 }
 .sr-only {
   position: absolute;
@@ -304,7 +304,7 @@ textarea {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #98a2ac;
+  color: #596b7a;
 }
 label {
   font-size: 12px;
@@ -447,7 +447,7 @@ label {
   font-size: 9px;
   letter-spacing: 1.7px;
   font-weight: 700;
-  color: #919ca6;
+  color: #596b7a;
   padding: 0 13px;
   margin-bottom: 14px;
 }
@@ -462,7 +462,7 @@ label {
   text-align: left;
   padding: 13px 14px;
   font-size: 13px;
-  color: #647483;
+  color: #596b7a;
   border-radius: 6px;
   display: flex;
   justify-content: space-between;
@@ -605,7 +605,7 @@ label {
 }
 .metrics small {
   font-size: 10px;
-  color: #88939d;
+  color: #596b7a;
   line-height: 1.4;
 }
 .metrics .attention strong {
@@ -665,7 +665,7 @@ label {
 .request-table th {
   font-size: 10px;
   font-weight: 500;
-  color: #7b8895;
+  color: #596b7a;
   background: #fbfcfd;
   padding: 15px 22px;
   white-space: nowrap;
@@ -706,7 +706,7 @@ label {
 }
 .cell-meta {
   display: block;
-  color: #8b98a4;
+  color: #596b7a;
   font-size: 9px;
   margin-top: 7px;
 }
@@ -730,7 +730,7 @@ label {
   background: #b16b5f;
 }
 .priority-medium {
-  color: #947541;
+  color: #596b7a;
 }
 .priority-medium:before {
   background: #aa925a;
@@ -755,7 +755,7 @@ label {
   border-top: 1px solid var(--line);
   padding: 15px 22px;
   font-size: 10px;
-  color: #8a97a1;
+  color: #596b7a;
   display: flex;
   justify-content: space-between;
   gap: 18px;
@@ -782,7 +782,7 @@ label {
 }
 .seat-row > span {
   font-size: 10px;
-  color: #95a1aa;
+  color: #596b7a;
   min-width: 20px;
 }
 .seat-row button {
@@ -792,7 +792,7 @@ label {
   border: 1px solid #e1e8ed;
   border-radius: 4px;
   font-size: 10px;
-  color: #95a6b2;
+  color: #596b7a;
 }
 .seat-row button.aisle {
   margin-left: 16px;
@@ -837,7 +837,7 @@ label {
 }
 .audit-list time {
   font-size: 11px;
-  color: #8293a1;
+  color: #596b7a;
   min-width: 55px;
 }
 .audit-list strong {
@@ -852,7 +852,7 @@ label {
 .audit-list small {
   display: block;
   font-size: 10px;
-  color: #93a0aa;
+  color: #596b7a;
   margin-top: 8px;
 }
 .settings-panel {
@@ -944,13 +944,13 @@ label {
   display: block;
   font-size: 9px;
   letter-spacing: 1.2px;
-  color: #91a0ad;
+  color: #596b7a;
   margin-bottom: 7px;
 }
 .passenger-flight strong {
   font-size: 12px;
   font-weight: 500;
-  color: #60788b;
+  color: #596b7a;
 }
 .seat-identity {
   display: flex;
@@ -1038,7 +1038,7 @@ label {
 }
 .service-number {
   font-size: 10px;
-  color: #9baab7;
+  color: #596b7a;
   margin-bottom: 16px;
 }
 .service-option strong {
@@ -1054,7 +1054,7 @@ label {
   position: absolute;
   top: 21px;
   right: 20px;
-  color: #96aabb;
+  color: #596b7a;
   font-size: 17px;
 }
 .passenger-columns {
@@ -1087,22 +1087,22 @@ label {
 }
 .compose-toolbar small {
   font-size: 10px;
-  color: #97a4af;
+  color: #596b7a;
 }
 .voice {
   font-size: 11px;
-  color: #6a8395;
+  color: #596b7a;
   background: none;
   border: 0;
   padding: 8px 0;
   min-height: 40px;
 }
 .voice.active {
-  color: #b05f51;
+  color: #596b7a;
 }
 .assistance-note {
   font-size: 10px;
-  color: #8a959f;
+  color: #596b7a;
   line-height: 1.8;
   padding-top: 24px;
   margin-top: 25px;
@@ -1130,7 +1130,7 @@ label {
 }
 .passenger-history .section-heading > span {
   font-size: 11px;
-  color: #8b9baa;
+  color: #596b7a;
 }
 .history-list {
   list-style: none;
@@ -1155,7 +1155,7 @@ label {
 }
 .history-list time {
   font-size: 10px;
-  color: #96a3af;
+  color: #596b7a;
   white-space: nowrap;
 }
 .history-list p {
@@ -1165,7 +1165,7 @@ label {
 }
 .history-list small {
   font-size: 9px;
-  color: #a0aab3;
+  color: #596b7a;
   display: block;
   margin-top: 12px;
 }

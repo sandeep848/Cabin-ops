@@ -209,11 +209,13 @@ export default function App() {
   const [speaker, setSpeaker] = useState("Captain");
   const [draft, setDraft] = useState("");
   const [settings, setSettings] = useState(null);
+  const settingsDirty = useRef(false);
   const [stockItem, setStockItem] = useState("");
   const [stockQuantity, setStockQuantity] = useState(10);
   const [clock, setClock] = useState(Date.now());
   const data = useCabinData(auth?.token, auth?.flight_id);
   const logout = () => {
+    settingsDirty.current = false;
     sessionStorage.removeItem("cso-crew");
     setAuth(null);
     setSelected(null);
@@ -227,7 +229,7 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
-    setSettings(data.context);
+    if (!settingsDirty.current) setSettings(data.context);
   }, [data.context]);
   useEffect(() => {
     if (selected)
@@ -282,6 +284,7 @@ export default function App() {
         method: "POST",
         body: JSON.stringify(settings),
       });
+      settingsDirty.current = false;
       await data.reload();
     } catch (error) {
       setNotice(error.message);
@@ -516,9 +519,7 @@ export default function App() {
                   />
                 )}
                 <footer className="panel-footer">
-                  <span>
-                    {tasks.length} requests shown · up to 500 records
-                  </span>
+                  <span>{tasks.length} requests shown · up to 500 records</span>
                   <span>
                     Acknowledgement targets: urgent 1 min · standard 10 min
                   </span>
@@ -741,6 +742,9 @@ export default function App() {
           {view === "Flight settings" && settings && (
             <form
               className="panel form-panel settings-panel"
+              onChangeCapture={() => {
+                settingsDirty.current = true;
+              }}
               onSubmit={saveSettings}
             >
               <h2>Service context</h2>
