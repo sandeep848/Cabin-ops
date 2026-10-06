@@ -1,7 +1,11 @@
-# Changelog
+# Change log
 
-## 2.0.0
-Rebuilt passenger and crew interfaces around clear service workflows. Added duplicate-safe request receipts, concurrent retry protection, crew ownership and timestamps, acknowledgement metrics, audited operational changes, database readiness, and a session outbox for routine requests. Removed 3D prototype code and external fonts. Added airline integration boundaries, portfolio guidance, and expanded tests.
+## Aircraft-aware passenger experience
 
-## 1.0.0
-Added portable setup, production containers, authenticated operations, transactional inventory reservations, booking provisioning, credential rotation, and CI.
+- Added an original seatback experience with local media playback, caption tracks, optional resume positions and crew-announcement interruption.
+- Implemented explainable metadata recommendations and a duration-constrained journey planner.
+- Replaced fixed aircraft/seat assumptions and global stock with operator-provisioned flight snapshots, crew grants and per-flight quantity/capacity management.
+- Added cancellation refunds, loading locks, flight closure and aggregate entertainment health.
+- Removed automatic sample records, default login shortcuts, repeated synthetic evaluation data, obsolete helper files and duplicate frontend re-exports.
+- Hardened authorization, session revocation, booking hashing, media grants, body/rate limits and container/network defaults.
+- Documented provisioning, security, content rights, recommendation limits and supplier integration boundaries.

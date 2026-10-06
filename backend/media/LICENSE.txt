@@ -1,0 +1,5 @@
+Original media, poster illustrations, caption text and compositions distributed in this directory are dedicated to the public domain under CC0 1.0 Universal.
+
+These assets were authored procedurally for Cabin Atlas. Source generation is in scripts/build_original_content.py. No commercial-film, aircraft photography or third-party music licensing is implied.
+
+CC0 legal text: https://creativecommons.org/publicdomain/zero/1.0/legalcode

@@ -36,6 +36,12 @@ async function ready(url) {
   throw new Error(`Service unavailable: ${url}`);
 }
 try {
+  const setup = launch(process.env.PYTHON || "python", [
+    "tests/provision_fixture.py",
+  ]);
+  const provisioned = await new Promise((resolve) => setup.on("exit", resolve));
+  if (provisioned !== 0) throw new Error("Test fixture provisioning failed");
+  processes.splice(processes.indexOf(setup), 1);
   launch(process.env.PYTHON || "python", [
     "-m",
     "uvicorn",
@@ -79,8 +85,11 @@ try {
     page.on("pageerror", (error) => errors.push(error.message));
   await passenger.goto("http://127.0.0.1:5183");
   await passenger.locator("#seat-input").fill("22A");
-  await passenger.locator("#booking-ref-input").fill("DEMO");
+  await passenger.locator("#booking-ref-input").fill("TESTREF");
   await passenger.locator("button[type=submit]").click();
+  await passenger
+    .getByRole("button", { name: "Cabin service", exact: true })
+    .click();
   await passenger
     .getByRole("textbox", { name: "Your service request" })
     .waitFor();
@@ -185,6 +194,99 @@ try {
     "A background refresh must preserve unsaved settings",
   );
   await crew.getByRole("button", { name: /^Requests/ }).click();
+  // Local entertainment must decode and play; recommendations must build a bounded playlist.
+  await passenger.setViewportSize({ width: 1366, height: 900 });
+  await passenger.getByRole("button", { name: "Watch", exact: true }).click();
+  await passenger
+    .getByRole("button", { name: "Play Under a quieter sky", exact: true })
+    .click();
+  await passenger
+    .getByRole("dialog", { name: "Playing Under a quieter sky" })
+    .waitFor();
+  await passenger.waitForFunction(
+    () => document.querySelector("video")?.readyState >= 2,
+  );
+  const duration = await passenger
+    .locator("video")
+    .evaluate((video) => video.duration);
+  assert.ok(
+    duration >= 44 && duration <= 46,
+    "Original video duration mismatch",
+  );
+  await passenger.locator("video").evaluate((video) => video.play());
+  await passenger.waitForFunction(
+    () => document.querySelector("video")?.currentTime > 0.3,
+  );
+  await passenger
+    .getByRole("checkbox", { name: "Save my position when I pause" })
+    .check();
+  await passenger.locator("video").evaluate((video) => video.pause());
+  await passenger
+    .getByText("Playback position saved for this seat.", { exact: true })
+    .waitFor();
+  // Crew broadcasts interrupt media playback, without silently resuming it.
+  await crew.getByRole("button", { name: "Broadcasts", exact: true }).click();
+  await crew.unroute("**/api/announcements");
+  await crew
+    .locator(".broadcast-textarea")
+    .fill("Please listen to the cabin crew.");
+  await crew.getByRole("button", { name: "Broadcast to Cabin" }).click();
+  await passenger
+    .getByText("Please listen to the cabin crew.", { exact: true })
+    .waitFor();
+  assert.equal(
+    await passenger.locator("video").evaluate((video) => video.paused),
+    true,
+  );
+  await passenger
+    .getByRole("button", { name: "Close player", exact: true })
+    .click();
+  await passenger.getByRole("button", { name: "Listen", exact: true }).click();
+  await passenger
+    .getByRole("button", { name: "Play Soft horizon", exact: true })
+    .click();
+  await passenger.waitForFunction(
+    () => document.querySelector("audio")?.readyState >= 2,
+  );
+  await passenger.locator("audio").evaluate((audio) => audio.play());
+  await passenger.waitForFunction(
+    () => document.querySelector("audio")?.currentTime > 0.3,
+  );
+  await passenger
+    .getByRole("button", { name: "Close player", exact: true })
+    .click();
+  await passenger
+    .getByRole("button", { name: "My journey", exact: true })
+    .click();
+  await passenger.getByRole("button", { name: "science", exact: true }).click();
+  await passenger
+    .getByRole("button", { name: "Build my journey", exact: true })
+    .click();
+  await passenger.locator(".plan-list").waitFor();
+  assert.ok((await passenger.locator(".plan-list li").count()) <= 4);
+  await passenger
+    .getByRole("button", { name: "Settings", exact: true })
+    .click();
+  await passenger.getByRole("checkbox", { name: "Higher contrast" }).check();
+  await passenger.getByRole("checkbox", { name: "Larger text" }).check();
+  await passenger
+    .getByRole("button", { name: "Clear my playback history", exact: true })
+    .click();
+  await passenger
+    .getByText(
+      "Your playback positions and current preferences have been cleared.",
+      { exact: true },
+    )
+    .waitFor();
+  await passenger.getByRole("checkbox", { name: "Higher contrast" }).uncheck();
+  await passenger.getByRole("checkbox", { name: "Larger text" }).uncheck();
+  await passenger
+    .getByRole("button", { name: "Discover", exact: true })
+    .click();
+  await crew
+    .getByRole("button", { name: "Entertainment", exact: true })
+    .click();
+  await crew.getByText(/File integrity verified/).waitFor();
   for (const page of [passenger, crew]) {
     await page.addScriptTag({ content: axe.source });
     const results = await page.evaluate(async () =>
@@ -201,10 +303,23 @@ try {
       "Accessibility violations",
     );
   }
+  await crew.getByRole("button", { name: /^Requests/ }).click();
   assert.deepEqual(errors, []);
   await mkdir(join(root, "test-results"), { recursive: true });
   await passenger.screenshot({
-    path: join(root, "test-results/passenger.png"),
+    path: join(root, "test-results/seatback.png"),
+    fullPage: true,
+  });
+  await passenger.setViewportSize({ width: 390, height: 844 });
+  assert.equal(
+    await passenger.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+    true,
+    "Seatback mobile layout overflows",
+  );
+  await passenger.screenshot({
+    path: join(root, "test-results/passenger-mobile.png"),
     fullPage: true,
   });
   await crew.screenshot({

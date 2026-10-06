@@ -1,16 +1,27 @@
-# Architecture and engineering decisions
+# Architecture
 
-## Request path
-Authenticate seat → parse bounded English text → apply crew-defined service rules → begin SQLite write transaction → check idempotency receipt → reserve inventory when dispatching → insert request → append creation audit → persist receipt → commit → publish invalidation event. Subscribers reload authoritative API data. A replay returns the stored response; a key reused for different input returns HTTP 409.
+Two React portals use same-origin Nginx proxies to a FastAPI cabin-edge service. SQLite WAL stores flight-scoped operational state. Entertainment assets are local immutable files; playback needs no public internet service.
 
-## Crew lifecycle
-Pending or delayed → acknowledged by a named crew member → completed by that member. Timestamps record acknowledgement and completion. Repeated identical status actions do not duplicate audit records. Service restrictions and stock checks are server enforced. Delayed stock is reserved at acknowledgement. Routine service is held when the configured context restricts it; high-priority requests remain visible for human review.
+```mermaid
+flowchart TD
+  P[Passenger screen] --> N[Nginx API proxy]
+  C[Crew workspace] --> N
+  N --> A[FastAPI service]
+  A --> D[(SQLite operational state)]
+  A --> M[Local media catalogue]
+  A --> R[Metadata ranker and playlist optimiser]
+```
 
-## Connectivity
-Server events provide immediate invalidation and 15-second polling recovers missed events. The passenger outbox uses tab-scoped sessionStorage, holds at most 20 nonurgent requests, and requires explicit retry. Stable UUID request keys make retries safe when the server committed but a response was lost. Sign-out removes local pending messages. Emergency delivery failures instruct passengers to use a physical call button. The outbox is not a service worker and cannot send after the tab closes.
+Aircraft templates expand explicit rows, seat-letter blocks, cabin labels and crew zones. A flight gets a snapshot; subsequent template edits cannot change existing seats. Crew grants and passenger bookings bind identities to active flight instances. Request routing uses the snapshot, never a fixed row-number formula.
 
-## Security and accountability
-Crew endpoints require the crew role. The bounded original passenger message is stored with the request and available in the crew detail drawer; operational retention rules must account for potentially sensitive text. Passenger requests are seat-bound. Audit events include actor, event type, request ID, flight, and timestamp; they omit booking references and passenger message bodies. Application code does not expose an audit update/delete operation, but SQLite audit records are not tamper-proof against database administrators. Production disables demo login and history clearing. Readiness tests storage access. Logs use URL paths without query strings so event tokens are excluded.
+Flight inventory is separate from aircraft geometry. Two aircraft can share a layout while carrying different loading manifests. Available units, outstanding reserved units and configured physical capacity are distinct. Supply categories support food, beverages, comfort and equipment. Galley writes and task transitions use `BEGIN IMMEDIATE` and conditional SQL updates; request creation, reservations, idempotency receipts and operational audit entries share one transaction.
 
-## Tradeoffs
-A rule-based parser is explainable and inexpensive offline, but handles English phrases only and does not establish safety understanding. Single-flight scope keeps deployment reproducible without claiming a fleet-ready data model. Local audit records support debugging and review; regulatory evidence needs a protected external sink. The interface shows the up to 500 task records, with open requests prioritized before historical records and latest 200 audit events; historical analysis must use controlled database exports.
+Idempotency scope is `(flight, seat, key)`, with a canonical payload hash. Reusing a key for different content returns a conflict. Replay returns the original receipt; current task state is obtained from request history. Cancelling a pending nonurgent task releases its reservation once. Assigned crew own accepted tasks; other crew cannot complete them.
+
+SSE carries flight-scoped invalidation topics without passenger payloads. The browser authenticates the stream with an Authorization header and reloads authoritative state. Reconnection and 15-second polling provide recovery; these are not durable event delivery. Queue and subscriber limits bound memory. Sessions expire after six hours and are revocable. Media uses a separate 15-minute opaque HttpOnly cookie backed by a hashed grant and a live parent session; it grants media GET access only.
+
+Preferences are memory-only on the passenger screen and are not retained server-side. Optional playback positions are scoped to flight and seat. Crew see aggregate recent playback states, not watched titles or preferences. Flight closure and booking replacement clear media history. Service records can contain passenger messages and need an operator retention policy.
+
+Current bounds: one backend process, one SQLite database per cabin-edge deployment, up to 1,000 seats per configured aircraft, 100 stock items per flight, a 500-title local catalogue, a maximum eight-title recommendation shortlist, and a four-title playlist. Crew queries are paginated and the interface shows up to 500 tasks and 200 audit entries. More flights do not turn this into a distributed fleet platform.
+
+Scale-out would require PostgreSQL, a distributed event broker/limiter, airline identity enrollment, media delivery infrastructure and a fleet deployment control plane. No empty adapters or pretend supplier SDK integration are included.

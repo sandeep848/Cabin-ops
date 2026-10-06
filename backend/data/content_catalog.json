@@ -1,0 +1,174 @@
+{
+  "version": "1.0.0",
+  "provenance": "Original procedural visuals, compositions and written microfeatures authored for this repository. No commercial film rights implied.",
+  "items": [
+    {
+      "id": "night-sky",
+      "title": "Under a quieter sky",
+      "kind": "video",
+      "genre": "science",
+      "duration_seconds": 45,
+      "mood": "slow",
+      "tags": [
+        "science",
+        "calm"
+      ],
+      "description": "A short guide to looking beyond the cabin window.",
+      "language": "en",
+      "captions": true,
+      "family_safe": true,
+      "asset": "night-sky.webm",
+      "poster": "night-sky.svg",
+      "caption_asset": "night-sky.vtt",
+      "license": "CC0-1.0",
+      "sha256": "d1650c888c03da2fa8aa6257b5e546bb8c49f3b77bdc97d2a9abcd15699ee472"
+    },
+    {
+      "id": "city-arrival",
+      "title": "A thoughtful arrival",
+      "kind": "video",
+      "genre": "travel",
+      "duration_seconds": 60,
+      "mood": "curious",
+      "tags": [
+        "travel",
+        "culture"
+      ],
+      "description": "Small habits that make a new city feel more familiar.",
+      "language": "en",
+      "captions": true,
+      "family_safe": true,
+      "asset": "city-arrival.webm",
+      "poster": "city-arrival.svg",
+      "caption_asset": "city-arrival.vtt",
+      "license": "CC0-1.0",
+      "sha256": "bbeac00759df8da3966d79c526e0a9d695912dbeddb86aa330a95780bcde2885"
+    },
+    {
+      "id": "lift-explained",
+      "title": "Why wings work",
+      "kind": "video",
+      "genre": "science",
+      "duration_seconds": 75,
+      "mood": "curious",
+      "tags": [
+        "science",
+        "learning"
+      ],
+      "description": "Airflow, pressure and the elegant shape of a wing.",
+      "language": "en",
+      "captions": true,
+      "family_safe": true,
+      "asset": "lift-explained.webm",
+      "poster": "lift-explained.svg",
+      "caption_asset": "lift-explained.vtt",
+      "license": "CC0-1.0",
+      "sha256": "b2eeb36259bd76727d96c13633920437f503bc2e0cb7a2c1b3bf27bea4882c6b"
+    },
+    {
+      "id": "colour-study",
+      "title": "The colour of distance",
+      "kind": "video",
+      "genre": "art",
+      "duration_seconds": 45,
+      "mood": "slow",
+      "tags": [
+        "art",
+        "calm"
+      ],
+      "description": "An original moving colour study for a short pause.",
+      "language": "en",
+      "captions": true,
+      "family_safe": true,
+      "asset": "colour-study.webm",
+      "poster": "colour-study.svg",
+      "caption_asset": "colour-study.vtt",
+      "license": "CC0-1.0",
+      "sha256": "cb44061034c9c82a3e1dde56af561122520b94d773f30db5aa1019e66d6f0e88"
+    },
+    {
+      "id": "soft-horizon",
+      "title": "Soft horizon",
+      "kind": "audio",
+      "genre": "ambient",
+      "duration_seconds": 60,
+      "mood": "slow",
+      "tags": [
+        "music",
+        "calm"
+      ],
+      "description": "An original low-volume electronic ambient composition.",
+      "language": "en",
+      "captions": false,
+      "family_safe": true,
+      "asset": "soft-horizon.ogg",
+      "poster": "soft-horizon.svg",
+      "caption_asset": null,
+      "license": "CC0-1.0",
+      "sha256": "c1ee471d02e9a781233e7bdf6d67dcf4a477ac98e91d82d1f7e8d5abd88afaf5"
+    },
+    {
+      "id": "orbital-pulse",
+      "title": "Orbital pulse",
+      "kind": "audio",
+      "genre": "electronic",
+      "duration_seconds": 75,
+      "mood": "energetic",
+      "tags": [
+        "music",
+        "science"
+      ],
+      "description": "An original repeating electronic rhythm, built for a short listen.",
+      "language": "en",
+      "captions": false,
+      "family_safe": true,
+      "asset": "orbital-pulse.ogg",
+      "poster": "orbital-pulse.svg",
+      "caption_asset": null,
+      "license": "CC0-1.0",
+      "sha256": "030be8f02a62978fd9b0264cbe322ca5762641082181c011bd5b277ddfe26a8d"
+    },
+    {
+      "id": "clear-morning",
+      "title": "Clear morning",
+      "kind": "audio",
+      "genre": "ambient",
+      "duration_seconds": 45,
+      "mood": "curious",
+      "tags": [
+        "music",
+        "travel"
+      ],
+      "description": "An original bright, minimal instrumental composition.",
+      "language": "en",
+      "captions": false,
+      "family_safe": true,
+      "asset": "clear-morning.ogg",
+      "poster": "clear-morning.svg",
+      "caption_asset": null,
+      "license": "CC0-1.0",
+      "sha256": "69aa75a65ee5ef770772911805fcfe9cd2d559bbad745e1476218b54b7ae28b3"
+    },
+    {
+      "id": "slow-current",
+      "title": "Slow current",
+      "kind": "audio",
+      "genre": "ambient",
+      "duration_seconds": 90,
+      "mood": "slow",
+      "tags": [
+        "music",
+        "calm"
+      ],
+      "description": "An original soft harmonic composition with no voice.",
+      "language": "en",
+      "captions": false,
+      "family_safe": true,
+      "asset": "slow-current.ogg",
+      "poster": "slow-current.svg",
+      "caption_asset": null,
+      "license": "CC0-1.0",
+      "sha256": "0a3a787b5cd870fe45fd45415b57062d778540c6ad6e0666d32d000accf083a5"
+    }
+  ]
+}

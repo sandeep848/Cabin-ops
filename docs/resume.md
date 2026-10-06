@@ -1,19 +1,23 @@
-# Portfolio presentation
+# Portfolio and interview evidence
 
-## Suggested project title
-Cabin Service Operations — Resilient passenger-to-crew service platform
+## Project description
 
-## Defensible resume bullets
-- Built a FastAPI/React cabin service platform with authenticated seat-level requests, crew ownership, inventory reservations, and operational audit history.
-- Implemented transactional idempotency and an offline passenger outbox to prevent duplicate requests and stock deductions during connectivity loss; tested concurrent retries.
-- Delivered responsive passenger and crew interfaces, automated API/browser tests, and a reproducible Docker/Nginx deployment with database readiness checks.
+**Cabin Atlas — onboard passenger experience and aircraft-aware service platform**
 
-Do not claim airline adoption, aviation certification, real passenger deployments, fleet-scale availability, or external-company approval. Use CI evidence, the measured build sizes, and the actual benchmark output if including quantitative results.
+Built an independent React/FastAPI cabin-edge application combining local entertainment playback, explainable duration-aware recommendations and flight-scoped service operations. Developed configurable aircraft layout snapshots, transactional quantity reservations, retry deduplication, cancellation refunds, crew ownership and auditable stock replenishment. Hardened session handling with revocation, hashed booking credentials, memory-only bearer state, protected media grants and negative cross-seat/cross-flight authorization tests.
 
-## Demonstration
-1. Passenger login on a mobile-width browser.
-2. Submit water, inspect the crew queue, acknowledge it, show ownership and timestamp, then complete it.
-3. Turn off the passenger browser network, save a routine request, restore connectivity, and explicitly send saved requests.
-4. Explain the stable idempotency key and show its concurrency regression test.
-5. Open Activity and follow creation/acknowledgement/completion events.
-6. Demonstrate flight-phase restrictions and the production Compose checks.
+Use only verified claims. Do not describe this as Panasonic software, airline-certified, breach-proof, a production airline deployment, or a trained recommendation model with measured passenger engagement. There is no guarantee that a particular company will hire you.
+
+## Interview walkthrough
+
+1. Explain the deployment problem: local network, shared terminals, variable cabin geometry, changing supply counts and limited flight time.
+2. Show a configured narrow-body and a mixed-cabin wide-body. Explain explicit seat blocks and immutable flight snapshots.
+3. Play a local video with captions and audio composition. Show optional position saving, a crew announcement interruption and history deletion.
+4. Change interests and available time. Explain sparse TF-IDF, cosine similarity, MMR and exact optimisation over a bounded shortlist; state that weights are not trained engagement predictions.
+5. Send two concurrent identical requests. Explain why stock, receipt and task insertion share a transaction. Show pending cancellation refunds once and crew ownership prevents conflicting completion.
+6. Demonstrate negative authorization tests, media range responses, session revocation and production-container startup evidence.
+7. Discuss the next supplier integration honestly: approved identity/seat binding, player/PA APIs, hardware rack validation, licensed media and independent security review.
+
+## Evidence to present
+
+Link the latest successful GitHub Actions run, the browser screenshots artifact, tests for fleet/inventory isolation and recommendations, the provisioning schema and security threat model. Performance and ranking-quality claims require target-hardware measurements and consented relevance data; do not invent them from correctness fixtures.

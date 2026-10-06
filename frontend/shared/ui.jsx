@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-export const BRAND = "Cabin Service Operations";
+export const BRAND = "Cabin Atlas";
 export const ACTIVE = ["pending", "urgent_pending", "accepted", "delayed"];
 export const label = (value) =>
   String(value || "")
@@ -37,6 +37,7 @@ export async function api(path, token, options = {}) {
   return data;
 }
 export function useCabinData(token, flight, passengerSeat) {
+  const generation = useRef(0);
   const [data, setData] = useState({
     tasks: [],
     announcements: [],
@@ -44,18 +45,23 @@ export function useCabinData(token, flight, passengerSeat) {
     audit: [],
     summary: {},
     context: {},
+    profile: {},
+    menu: [],
   });
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const load = useCallback(async () => {
     if (!token) return;
+    const current = generation.current;
     try {
       const paths = passengerSeat
         ? [
             `/passenger/requests?seat=${passengerSeat}`,
             `/announcements?flight_id=${flight}`,
             `/flight-context?flight_id=${flight}`,
+            "/flight-profile",
+            "/experience/menu",
           ]
         : [
             "/crew/tasks?limit=500",
@@ -64,37 +70,82 @@ export function useCabinData(token, flight, passengerSeat) {
             "/crew/inventory",
             "/crew/operations",
             "/crew/audit",
+            "/flight-profile",
           ];
       const values = await Promise.all(paths.map((path) => api(path, token)));
+      if (current !== generation.current) return;
       setData({
         tasks: values[0],
         announcements: values[1],
         context: values[2],
-        inventory: values[3] || [],
-        summary: values[4] || {},
+        profile: passengerSeat ? values[3] : values[6],
+        menu: passengerSeat ? values[4] : [],
+        inventory: passengerSeat ? [] : values[3] || [],
+        summary: passengerSeat ? {} : values[4] || {},
         audit: values[5] || [],
       });
       setError("");
       setConnected(true);
     } catch (failure) {
+      if (current !== generation.current) return;
       setError(failure.message);
       setConnected(false);
     } finally {
-      setLoading(false);
+      if (current === generation.current) setLoading(false);
     }
   }, [token, flight, passengerSeat]);
   useEffect(() => {
+    generation.current++;
+    setData({
+      tasks: [],
+      announcements: [],
+      inventory: [],
+      audit: [],
+      summary: {},
+      context: {},
+      profile: {},
+      menu: [],
+    });
+    setLoading(true);
     if (!token) return;
     load();
-    const stream = new EventSource(
-      `/api/events?token=${encodeURIComponent(token)}`,
-    );
-    stream.onmessage = () => load();
-    stream.onerror = () => setConnected(false);
+    const controller = new AbortController();
+    let retry;
+    async function connect() {
+      try {
+        const response = await fetch("/api/events", {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        if (response.status === 401) {
+          window.dispatchEvent(new Event("session-expired"));
+          return;
+        }
+        if (!response.ok || !response.body)
+          throw new Error("Stream unavailable");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffered = "";
+        while (!controller.signal.aborted) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffered += decoder.decode(value, { stream: true });
+          const messages = buffered.split("\n\n");
+          buffered = messages.pop();
+          if (messages.some((message) => message.startsWith("data:"))) load();
+        }
+      } catch {
+        if (!controller.signal.aborted) setConnected(false);
+      }
+      if (!controller.signal.aborted) retry = setTimeout(connect, 5000);
+    }
+    connect();
     const interval = setInterval(load, 15000);
     window.addEventListener("online", load);
     return () => {
-      stream.close();
+      generation.current++;
+      controller.abort();
+      clearTimeout(retry);
       clearInterval(interval);
       window.removeEventListener("online", load);
     };
@@ -124,6 +175,7 @@ export function Badge({ status }) {
         answered: "Answered",
         completed: "Completed",
         rejected: "Unavailable",
+        ignored: "Cancelled",
       }[status] || label(status)}
     </span>
   );
@@ -187,7 +239,7 @@ export function Login({ type, onLogin }) {
         </div>
         <div>
           <span className="eyebrow">
-            {type === "crew" ? "CREW WORKSPACE" : "PASSENGER SERVICES"}
+            {type === "crew" ? "CREW WORKSPACE" : "PASSENGER EXPERIENCE"}
           </span>
           <h1>
             {type === "crew" ? (
@@ -199,18 +251,18 @@ export function Login({ type, onLogin }) {
               <>
                 Your seat.
                 <br />
-                Your service.
+                Your journey.
               </>
             )}
           </h1>
           <p>
             {type === "crew"
               ? "A clear view of every request, from acknowledgement to completion."
-              : "Request what you need and follow its progress without leaving your seat."}
+              : "Find something worth watching, plan your time, and connect with the cabin crew."}
           </p>
         </div>
         <span className="story-footer">
-          Purpose-built for cabin service coordination
+          Entertainment and cabin service, connected
         </span>
       </div>
       <div className="login-form-wrap">
@@ -253,7 +305,7 @@ export function Login({ type, onLogin }) {
                 id="seat-input"
                 name="seat"
                 placeholder="22A"
-                maxLength={3}
+                maxLength={4}
                 required
               />
               <label htmlFor="booking-ref-input">Booking reference</label>

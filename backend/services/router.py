@@ -1,16 +1,7 @@
-# Seat routing helper mapping seat numbers to zones. Imported by backend/main.py.
-import re
+"""Resolve service zones from the assigned aircraft layout, not row-number heuristics."""
 
-def seat_to_zone(seat: str) -> str:
-    match = re.match(r"^(\d{1,2})[A-F]$", seat.strip().upper())
-    if not match:
-        return "unknown"
+from backend.services.fleet import configured_seat
 
-    row = int(match.group(1))
-    if 1 <= row <= 10:
-        return "fore_cabin"
-    if 11 <= row <= 20:
-        return "mid_cabin"
-    if 21 <= row <= 30:
-        return "aft_cabin"
-    return "unknown"
+
+def seat_to_zone(seat: str, flight_id: str) -> str:
+    return configured_seat(flight_id, seat.strip().upper())["zone"]

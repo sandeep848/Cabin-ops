@@ -12,7 +12,9 @@ import {
   time,
   age,
   BRAND,
-} from "./ui";
+} from "../../shared/ui";
+import SeatOverview from "./SeatOverview";
+import EntertainmentHealth from "./EntertainmentHealth";
 import "./App.css";
 
 const VIEWS = [
@@ -22,6 +24,7 @@ const VIEWS = [
   "Broadcasts",
   "Activity",
   "Flight settings",
+  "Entertainment",
 ];
 const ZONES = { fore_cabin: "Forward", mid_cabin: "Middle", aft_cabin: "Aft" };
 const RESTRICTED = [
@@ -196,9 +199,7 @@ function RequestTable({
 }
 
 export default function App() {
-  const [auth, setAuth] = useState(() =>
-    JSON.parse(sessionStorage.getItem("cso-crew") || "null"),
-  );
+  const [auth, setAuth] = useState(null);
   const [view, setView] = useState("Requests");
   const [filter, setFilter] = useState("open");
   const [zone, setZone] = useState("");
@@ -216,6 +217,8 @@ export default function App() {
   const data = useCabinData(auth?.token, auth?.flight_id);
   const logout = () => {
     settingsDirty.current = false;
+    if (auth?.token)
+      api("/auth/logout", auth.token, { method: "POST" }).catch(() => {});
     sessionStorage.removeItem("cso-crew");
     setAuth(null);
     setSelected(null);
@@ -241,7 +244,6 @@ export default function App() {
       body: JSON.stringify(payload),
     });
     const next = { ...result, username: payload.username };
-    sessionStorage.setItem("cso-crew", JSON.stringify(next));
     setAuth(next);
   }
   async function action(task, operation) {
@@ -344,9 +346,9 @@ export default function App() {
         <div className="brand">
           <Mark />
           <span>
-            Cabin Service
+            Cabin Atlas
             <br />
-            <b>Operations</b>
+            <b>Crew Operations</b>
           </span>
         </div>
         <span className="nav-caption">WORKSPACE</span>
@@ -382,6 +384,30 @@ export default function App() {
         <header className="topbar">
           <span>
             Flight <strong>{auth.flight_id}</strong>
+            {auth.flights?.length > 1 && (
+              <select
+                aria-label="Select assigned flight"
+                value={auth.flight_id}
+                onChange={async (event) => {
+                  try {
+                    const next = await api(
+                      `/crew/flight/${encodeURIComponent(event.target.value)}/select`,
+                      auth.token,
+                      { method: "POST" },
+                    );
+                    settingsDirty.current = false;
+                    setSelected(null);
+                    setAuth({ ...next, username: auth.username });
+                  } catch (error) {
+                    setNotice(error.message);
+                  }
+                }}
+              >
+                {auth.flights.map((flight) => (
+                  <option key={flight}>{flight}</option>
+                ))}
+              </select>
+            )}
             <span className="topbar-divider" />
             Crew workspace
           </span>
@@ -414,6 +440,8 @@ export default function App() {
                     Galley: "Keep a clear view of available cabin supplies.",
                     Broadcasts: "Send a clear message to everyone on board.",
                     Activity: "A chronological record of service operations.",
+                    Entertainment:
+                      "Verify local content and review aggregate terminal reports.",
                     "Flight settings":
                       "Control the service context for this cabin.",
                   }[view]
@@ -528,49 +556,14 @@ export default function App() {
             </>
           )}
           {view === "Cabin" && (
-            <section className="panel cabin-panel">
-              <div className="section-heading">
-                <h2>Seat overview</h2>
-                <p>
-                  Each row represents six seats. Select a highlighted seat to
-                  inspect a request.
-                </p>
-              </div>
-              <div className="seat-map">
-                {Array.from({ length: 30 }, (_, index) => (
-                  <div className="seat-row" key={index}>
-                    <span>{index + 1}</span>
-                    {"ABCDEF".split("").map((column, position) => {
-                      const seat = `${index + 1}${column}`;
-                      const task = data.tasks
-                        .filter(
-                          (item) =>
-                            item.seat === seat && ACTIVE.includes(item.status),
-                        )
-                        .sort(
-                          (a, b) =>
-                            (b.urgency === "high") - (a.urgency === "high"),
-                        )[0];
-                      return (
-                        <button
-                          key={seat}
-                          aria-label={`Seat ${seat}${task ? ": " + label(task.intent) : ": no open requests"}`}
-                          className={`${position === 3 ? "aisle" : ""} ${task ? "occupied " + (task.urgency === "high" ? "priority-seat" : "") : ""}`}
-                          disabled={!task}
-                          onClick={() => setSelected(task)}
-                        >
-                          {column}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-              <p className="muted">
-                Filled seats have open requests. Red marks high-priority
-                attention.
-              </p>
-            </section>
+            <SeatOverview
+              profile={data.profile}
+              tasks={data.tasks}
+              onSelect={setSelected}
+            />
+          )}
+          {view === "Entertainment" && (
+            <EntertainmentHealth token={auth.token} />
           )}
           {view === "Galley" && (
             <div className="two-column">
@@ -583,16 +576,18 @@ export default function App() {
                   <thead>
                     <tr>
                       <th>Item</th>
-                      <th>Available</th>
+                      <th>Available / reserved / capacity</th>
                       <th>Stock level</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.inventory.map((item) => (
                       <tr key={item.item}>
-                        <td>{label(item.item)}</td>
+                        <td>{item.name}</td>
                         <td>
-                          <strong>{item.stock}</strong>
+                          <strong>
+                            {item.stock} / {item.reserved} / {item.capacity}
+                          </strong>
                         </td>
                         <td>
                           <span
@@ -625,7 +620,7 @@ export default function App() {
                   <option value="">Select an item</option>
                   {data.inventory.map((item) => (
                     <option key={item.item} value={item.item}>
-                      {label(item.item)}
+                      {item.name}
                     </option>
                   ))}
                 </select>

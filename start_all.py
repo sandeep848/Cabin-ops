@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""Start the CabinOps development API and passenger/crew portals."""
+r"""Start the Cabin Atlas development API and passenger/crew portals."""
 
 from __future__ import annotations
 
@@ -14,7 +14,6 @@ import urllib.error
 import urllib.request
 import webbrowser
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parent
 BACKEND_HOST = "127.0.0.1"
@@ -72,7 +71,6 @@ def check_required_files() -> None:
         ROOT / "backend" / "services" / "intent_parser.py",
         ROOT / "backend" / "services" / "flight_rules.py",
         ROOT / "backend" / "database" / "__init__.py",
-        ROOT / "backend" / "data" / "flight_context.json",
         ROOT / "requirements.txt",
     ]
 
@@ -82,7 +80,7 @@ def check_required_files() -> None:
         print("[ERROR] Missing required project files:")
         for path in missing:
             print(f"        {path}")
-        print("\nYou are probably not running this from the cabinops-ai project root.")
+        print("\nYou are probably not running this from the project root.")
         raise SystemExit(1)
 
     print("[OK] Required backend files found.")
@@ -110,8 +108,16 @@ def check_python_imports(env: dict[str, str]) -> None:
 
     # Auto-detect the virtual environments or Conda 'CV' environment
     venv_paths = [
-        ROOT / ".venv" / "Scripts" / "python.exe" if os.name == "nt" else ROOT / ".venv" / "bin" / "python",
-        ROOT / "venv" / "Scripts" / "python.exe" if os.name == "nt" else ROOT / "venv" / "bin" / "python",
+        (
+            ROOT / ".venv" / "Scripts" / "python.exe"
+            if os.name == "nt"
+            else ROOT / ".venv" / "bin" / "python"
+        ),
+        (
+            ROOT / "venv" / "Scripts" / "python.exe"
+            if os.name == "nt"
+            else ROOT / "venv" / "bin" / "python"
+        ),
     ]
 
     cv_python = None
@@ -121,7 +127,9 @@ def check_python_imports(env: dict[str, str]) -> None:
             break
 
     if cv_python and sys.executable != str(cv_python):
-        print(f"[INFO] Current Python lacks dependencies. Attempting to use environment: {cv_python}")
+        print(
+            f"[INFO] Current Python lacks dependencies. Attempting to use environment: {cv_python}"
+        )
         cv_result = subprocess.run(
             [
                 str(cv_python),
@@ -135,13 +143,15 @@ def check_python_imports(env: dict[str, str]) -> None:
             stderr=subprocess.STDOUT,
         )
         if cv_result.returncode == 0:
-            print("[OK] Dependencies found in environment. Re-running start script using auto-detected Python...")
+            print(
+                "[OK] Dependencies found in environment. Re-running start script using auto-detected Python..."
+            )
             sys.exit(subprocess.call([str(cv_python), "-u"] + sys.argv, env=env))
 
     print(result.stdout.strip())
     if result.returncode != 0:
         print("[ERROR] Python imports failed.")
-        print("Fix: run pip install -r requirements.txt or activate the 'CV' conda environment.")
+        print("Fix: run pip install -r requirements.txt.")
         raise SystemExit(1)
 
 
@@ -157,7 +167,9 @@ def start_backend(env: dict[str, str], backend_port: int) -> subprocess.Popen | 
             return None
 
         print("[ERROR] Port is occupied, but backend health check failed.")
-        print(f"Fix: close the process using port {backend_port}, or use --backend-port another_port.")
+        print(
+            f"Fix: close the process using port {backend_port}, or use --backend-port another_port."
+        )
         raise SystemExit(1)
 
     process = run_command(
@@ -181,7 +193,9 @@ def start_backend(env: dict[str, str], backend_port: int) -> subprocess.Popen | 
     if not wait_for_url(backend_url, timeout=30):
         print("[ERROR] Backend did not start correctly.")
         print("Run manually to see the traceback:")
-        print(f"       python -m uvicorn backend.main:app --reload --port {backend_port}")
+        print(
+            f"       python -m uvicorn backend.main:app --reload --port {backend_port}"
+        )
         process.terminate()
         raise SystemExit(1)
 
@@ -203,7 +217,9 @@ def npm_exists() -> bool:
         return False
 
 
-def start_frontend(env: dict[str, str], folder_name: str, display_name: str, frontend_port: int) -> subprocess.Popen | None:
+def start_frontend(
+    env: dict[str, str], folder_name: str, display_name: str, frontend_port: int
+) -> subprocess.Popen | None:
     frontend_dir = ROOT / "frontend" / folder_name
 
     if not frontend_dir.exists():
@@ -211,7 +227,9 @@ def start_frontend(env: dict[str, str], folder_name: str, display_name: str, fro
         return None
 
     if not npm_exists():
-        print(f"[WARN] npm is not installed or not available in PATH. Skipping {display_name}.")
+        print(
+            f"[WARN] npm is not installed or not available in PATH. Skipping {display_name}."
+        )
         return None
 
     frontend_url = f"http://{FRONTEND_HOST}:{frontend_port}"
@@ -257,7 +275,9 @@ def start_frontend(env: dict[str, str], folder_name: str, display_name: str, fro
     if wait_for_url(frontend_url, timeout=30):
         print(f"[OK] {display_name} running: {frontend_url}")
     else:
-        print(f"[WARN] {display_name} may still be starting. Check the terminal output.")
+        print(
+            f"[WARN] {display_name} may still be starting. Check the terminal output."
+        )
 
     return process
 
@@ -277,23 +297,28 @@ def run_quick_backend_checks(backend_port: int) -> None:
 
     # Authenticate as passenger first to get bearer token
     auth_url = f"http://{BACKEND_HOST}:{backend_port}/auth/passenger"
-    
+
     booking_ref = "APX22A"
     db_path = ROOT / "backend" / "cabinops.db"
     if db_path.exists():
         try:
             import sqlite3
+
             with sqlite3.connect(db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT booking_reference FROM bookings WHERE seat = '22A'")
+                cursor.execute(
+                    "SELECT booking_reference FROM bookings WHERE seat = '22A'"
+                )
                 row = cursor.fetchone()
                 if row:
                     booking_ref = row[0]
         except Exception:
             pass
-            
-    auth_payload = json.dumps({"seat": "22A", "booking_reference": booking_ref}).encode("utf-8")
-    
+
+    auth_payload = json.dumps({"seat": "22A", "booking_reference": booking_ref}).encode(
+        "utf-8"
+    )
+
     token = None
     try:
         auth_req = urllib.request.Request(
@@ -322,7 +347,7 @@ def run_quick_backend_checks(backend_port: int) -> None:
         data=payload,
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}"
+            "Authorization": f"Bearer {token}",
         },
         method="POST",
     )
@@ -332,13 +357,17 @@ def run_quick_backend_checks(backend_port: int) -> None:
             body = response.read().decode("utf-8")
             print(f"[OK] POST /request -> {body}")
     except urllib.error.HTTPError as exc:
-        print(f"[ERROR] POST /request HTTP {exc.code}: {exc.read().decode('utf-8', errors='replace')}")
+        print(
+            f"[ERROR] POST /request HTTP {exc.code}: {exc.read().decode('utf-8', errors='replace')}"
+        )
     except Exception as exc:
         print(f"[ERROR] POST /request failed: {exc}")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Start CabinOps AI backend and both frontends.")
+    parser = argparse.ArgumentParser(
+        description="Start Cabin Atlas backend and both frontends."
+    )
     parser.add_argument("--backend-port", type=int, default=8000)
     parser.add_argument("--passenger-port", type=int, default=5173)
     parser.add_argument("--crew-port", type=int, default=5174)
@@ -347,7 +376,7 @@ def main() -> int:
     parser.add_argument("--skip-checks", action="store_true")
     args = parser.parse_args()
 
-    print_header("CabinOps AI startup launcher (All Services)")
+    print_header("Cabin Atlas startup launcher (All Services)")
     print(f"Project root:   {ROOT}")
     print(f"Python:          {sys.executable}")
     print(f"Backend port:    {args.backend_port}")
@@ -359,6 +388,7 @@ def main() -> int:
     env["ENV"] = "development"
     if "SECRET_KEY" not in env:
         import secrets
+
         ephemeral_secret = secrets.token_hex(32)
         env["SECRET_KEY"] = ephemeral_secret
         print("[INFO] Generated an ephemeral development session secret.")
@@ -379,8 +409,12 @@ def main() -> int:
             run_quick_backend_checks(args.backend_port)
 
         if not args.backend_only:
-            passenger_process = start_frontend(env, "passenger_screen", "Passenger Screen", args.passenger_port)
-            crew_process = start_frontend(env, "crew_dashboard", "Crew Dashboard", args.crew_port)
+            passenger_process = start_frontend(
+                env, "passenger_screen", "Passenger Screen", args.passenger_port
+            )
+            crew_process = start_frontend(
+                env, "crew_dashboard", "Crew Dashboard", args.crew_port
+            )
 
         docs_url = f"http://{BACKEND_HOST}:{args.backend_port}/docs"
         passenger_url = f"http://{FRONTEND_HOST}:{args.passenger_port}"

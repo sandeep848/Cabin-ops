@@ -9,6 +9,12 @@ services:
       CABINOPS_DB_PATH: /data/cabinops.db
     volumes:
       - cabinops-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [cabin]
     restart: unless-stopped
   passenger:
     build:
@@ -17,10 +23,16 @@ services:
       args:
         PORTAL: passenger_screen
     ports:
-      - "127.0.0.1:5173:80"
+      - "127.0.0.1:5173:8080"
     depends_on:
       backend:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [cabin]
     restart: unless-stopped
   crew:
     build:
@@ -29,10 +41,20 @@ services:
       args:
         PORTAL: crew_dashboard
     ports:
-      - "127.0.0.1:5174:80"
+      - "127.0.0.1:5174:8080"
     depends_on:
       backend:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [cabin]
     restart: unless-stopped
 volumes:
   cabinops-data:
+
+networks:
+  cabin:
+    internal: true

@@ -1,7 +1,9 @@
 """Short-lived SQLite connections with explicit transaction and cleanup."""
+
 import sqlite3
 from contextlib import contextmanager
 from backend.config import DB_PATH
+
 
 @contextmanager
 def get_connection():

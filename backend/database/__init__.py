@@ -3,7 +3,6 @@ from backend.database.schema import init_db
 from backend.database.operations import (
     can_transition,
     allowed_previous_statuses,
-    sync_announcements_json,
     get_db_flight_context,
     update_db_flight_context,
     insert_task,

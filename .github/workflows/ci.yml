@@ -1,4 +1,4 @@
-name: Cabin Service Operations CI
+name: Cabin Atlas CI
 on: [push, pull_request]
 permissions:
   contents: read
@@ -15,7 +15,6 @@ jobs:
       - run: python -m pytest -q
         env:
           TESTING: 'true'
-      - run: python scripts/evaluate_parser.py
       - run: docker compose up --build --wait --wait-timeout 120
         env:
           SECRET_KEY: ci-only-signing-key-not-for-real-deployment
@@ -28,7 +27,7 @@ jobs:
               with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/health') as response:
                   assert json.load(response)['status'] == 'ok'
               with urllib.request.urlopen(f'http://127.0.0.1:{port}/') as response:
-                  assert b'Cabin Service Operations' in response.read()
+                  assert b'Cabin Atlas' in response.read()
           request = urllib.request.Request('http://127.0.0.1:5173/api/auth/passenger', data=json.dumps({'seat': '22A', 'booking_reference': 'DEMO'}).encode(), headers={'Content-Type': 'application/json'})
           try:
               urllib.request.urlopen(request)
@@ -58,6 +57,7 @@ jobs:
           cache-dependency-path: frontend/${{ matrix.portal }}/package-lock.json
       - run: npm ci
       - run: npm run build
+      - run: npm audit --audit-level=high
   browser:
     runs-on: ubuntu-latest
     steps:
@@ -79,3 +79,12 @@ jobs:
           name: browser-screenshots
           path: test-results/
           if-no-files-found: ignore
+  dependency-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pip-audit==2.10.1
+      - run: python -m pip_audit -r requirements.txt

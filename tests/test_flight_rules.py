@@ -1,5 +1,6 @@
 from backend.services.flight_rules import apply_flight_rules
 
+
 def test_service_paused_during_landing_preparation():
     parsed = {
         "seat": "3A",
@@ -12,6 +13,8 @@ def test_service_paused_during_landing_preparation():
         "confidence": 0.8,
         "action": "Create crew task.",
     }
-    out = apply_flight_rules(parsed, {"flight_phase": "landing_preparation", "seatbelt_sign": True})
+    out = apply_flight_rules(
+        parsed, {"flight_phase": "landing_preparation", "seatbelt_sign": True}
+    )
     assert out["crew_required"] is False
     assert out["status"] == "delayed"

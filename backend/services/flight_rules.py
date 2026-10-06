@@ -15,14 +15,27 @@ def apply_flight_rules(parsed: dict, flight_context: dict) -> dict:
         return parsed_copy
 
     # Phases where standard cabin service is suspended by the application policy
-    RESTRICTED_PHASES = {"takeoff", "landing_preparation", "landing", "taxi", "boarding"}
+    RESTRICTED_PHASES = {
+        "takeoff",
+        "landing_preparation",
+        "landing",
+        "taxi",
+        "boarding",
+    }
 
-    if phase in RESTRICTED_PHASES:
-        if intent in {"water_request", "meal_request", "blanket_request"}:
+    if phase in RESTRICTED_PHASES or seatbelt:
+        if intent in {
+            "water_request",
+            "meal_request",
+            "blanket_request",
+            "general_assistance",
+        }:
             parsed_copy["crew_required"] = False
             parsed_copy["assigned_zone"] = None
             parsed_copy["status"] = "delayed"
-            parsed_copy["action"] = f"Delay; service paused during {phase.replace('_', ' ')} phase."
+            parsed_copy["action"] = (
+                f"Delay; routine service is paused during the current cabin conditions."
+            )
             return parsed_copy
 
     if not meal_active and intent == "meal_request":
@@ -36,7 +49,9 @@ def apply_flight_rules(parsed: dict, flight_context: dict) -> dict:
         parsed_copy["crew_required"] = False
         parsed_copy["assigned_zone"] = None
         parsed_copy["status"] = "answered"
-        parsed_copy["action"] = "Auto-answer: lavatory unavailable while seatbelt sign is on."
+        parsed_copy["action"] = (
+            "Auto-answer: lavatory unavailable while seatbelt sign is on."
+        )
         return parsed_copy
 
     return parsed_copy

@@ -1,51 +1,87 @@
-import logging
+"""Bounded per-principal throttling; shared cabin NAT cannot merge all passengers."""
+
 import threading
-import random
 import time
 from collections import defaultdict
-from fastapi import Request, HTTPException, status
+from fastapi import HTTPException, Request
+from backend.security.tokens import verify_token
 
-logger = logging.getLogger("cabinops.security.limiter")
 
 class RateLimiter:
-    def __init__(self, requests_limit: int, window_seconds: int):
+    def __init__(self, requests_limit, window_seconds):
         self.requests_limit = requests_limit
         self.window_seconds = window_seconds
         self.history = defaultdict(list)
         self.lock = threading.Lock()
-        
-    def __call__(self, request: Request):
-        ip = "unknown"
-        if request.client:
-            ip = request.client.host
-            
-        path = request.url.path
-        key = f"{ip}:{path}"
-        
-        now = time.time()
-        with self.lock:
-            # Clean up old timestamps for current key
-            self.history[key] = [t for t in self.history[key] if now - t < self.window_seconds]
-            
-            # Periodically clean up other keys to prevent memory leak
-            if random.random() < 0.01:
-                keys_to_delete = []
-                for k, timestamps in list(self.history.items()):
-                    cleaned = [t for t in timestamps if now - t < self.window_seconds]
-                    if not cleaned:
-                        keys_to_delete.append(k)
-                    else:
-                        self.history[k] = cleaned
-                for k in keys_to_delete:
-                    self.history.pop(k, None)
-            
-            if len(self.history[key]) >= self.requests_limit:
-                logger.warning(f"Rate limit exceeded for key={key}")
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Too many requests. Please try again later."
-                )
-            self.history[key].append(now)
+        self.last_cleanup = 0
 
-auth_limiter = RateLimiter(requests_limit=10, window_seconds=60)
-request_limiter = RateLimiter(requests_limit=20, window_seconds=60)
+    async def __call__(self, request: Request):
+        ip = request.client.host if request.client else "unknown"
+        credential = request.headers.get("authorization", "")
+        claims = (
+            verify_token(credential[7:])
+            if credential.lower().startswith("bearer ")
+            else None
+        )
+        if claims:
+            identity = (
+                "crew:" + claims.get("username", "crew")
+                if claims["role"] == "crew"
+                else claims["flight_id"] + ":" + claims["seat"]
+            )
+        elif request.url.path in {"/auth/crew", "/auth/passenger"}:
+            try:
+                body = await request.json()
+            except ValueError:
+                body = {}
+            name = (
+                str(
+                    body.get("username")
+                    or str(body.get("flight_id", "")) + ":" + str(body.get("seat", ""))
+                )[:120]
+                if isinstance(body, dict)
+                else "invalid"
+            )
+            identity = "login:" + name.lower()
+        else:
+            identity = "ip:" + ip
+        key = identity + ":" + request.url.path
+        now = time.monotonic()
+        with self.lock:
+            if now - self.last_cleanup > 30 or len(self.history) >= 10000:
+                self.history = {
+                    k: [t for t in values if now - t < self.window_seconds]
+                    for k, values in self.history.items()
+                    if values and now - values[-1] < self.window_seconds
+                }
+                self.last_cleanup = now
+            if request.url.path in {"/auth/crew", "/auth/passenger"}:
+                ip_key = "login-ip:" + ip
+                attempts = [
+                    t
+                    for t in self.history.get(ip_key, [])
+                    if now - t < self.window_seconds
+                ]
+                if len(attempts) >= 1000:
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Login rate exceeded",
+                        headers={"Retry-After": str(self.window_seconds)},
+                    )
+                self.history[ip_key] = [*attempts, now]
+            values = [
+                t for t in self.history.get(key, []) if now - t < self.window_seconds
+            ]
+            if len(values) >= self.requests_limit or (
+                key not in self.history and len(self.history) >= 10000
+            ):
+                raise HTTPException(
+                    status_code=429,
+                    detail="Too many requests. Please try again later.",
+                    headers={"Retry-After": str(self.window_seconds)},
+                )
+            self.history[key] = [*values, now]
+
+
+auth_limiter = RateLimiter(10, 60)
+request_limiter = RateLimiter(30, 60)
