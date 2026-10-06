@@ -4,6 +4,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && useradd --uid 1001 --create-home cabinops
 COPY backend ./backend
 COPY docs ./docs
+COPY scripts ./scripts
 RUN mkdir -p /data && chown cabinops:cabinops /data
 ENV ENV=production CABINOPS_DB_PATH=/data/cabinops.db
 USER cabinops

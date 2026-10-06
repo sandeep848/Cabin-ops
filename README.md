@@ -32,7 +32,14 @@ docker compose up --build -d
 
 Both portals run behind Nginx with `/api` proxying and event-stream support. SQLite is stored in the `cabinops-data` volume. Bindings are local by default; put an HTTPS reverse proxy in front before exposing them. Use one backend worker: live updates and rate limits are in-process. Back up the database volume before upgrades; `docker compose down` preserves data, while `down -v` removes it.
 
-Production has no synthetic bookings. Provision real seat/reference records in the `bookings` table for flight `APX-001` before passenger login. `CREW_USERNAME` and `CREW_PASSWORD` bootstrap the crew account only for a new database; changing them does not rotate an existing account. See [deployment guidance](docs/deployment.md).
+Production has no synthetic bookings. Provision a booking before passenger login (the reference is requested privately):
+
+```bash
+docker compose exec backend python scripts/manage.py booking --seat 22A --name "Passenger"
+docker compose exec backend python scripts/manage.py crew --username crew
+```
+
+The second command creates or rotates crew credentials. `CREW_USERNAME` and `CREW_PASSWORD` bootstrap the crew account only for a new database; changing them does not rotate an existing account. See [deployment guidance](docs/deployment.md).
 
 ## Verification
 

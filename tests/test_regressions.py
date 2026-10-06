@@ -76,3 +76,20 @@ def test_inventory_rolls_back_if_task_creation_fails(monkeypatch):
         response = failing_client.post('/request', json={'seat': '22A', 'text': 'Water please'}, headers={'Authorization': f'Bearer {token}'})
     assert response.status_code == 500
     assert get_inventory_levels() == before
+
+def test_provisioned_booking_works_in_production(monkeypatch):
+    from scripts import manage
+    monkeypatch.setenv('ENV', 'production')
+    monkeypatch.setattr('sys.argv', ['manage.py', 'booking', '--seat', '22A', '--name', 'Test passenger'])
+    monkeypatch.setattr('getpass.getpass', lambda prompt: 'REALREF')
+    manage.main()
+    response = client.post('/auth/passenger', json={'seat': '22A', 'booking_reference': 'REALREF'})
+    assert response.status_code == 200
+
+def test_crew_password_rotation(monkeypatch):
+    from scripts import manage
+    monkeypatch.setattr('sys.argv', ['manage.py', 'crew', '--username', 'rotated-crew'])
+    monkeypatch.setattr('getpass.getpass', lambda prompt: 'new-test-password-123')
+    manage.main()
+    response = client.post('/auth/crew', json={'username': 'rotated-crew', 'password': 'new-test-password-123'})
+    assert response.status_code == 200

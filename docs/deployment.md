@@ -2,7 +2,7 @@
 
 Run the supplied Compose stack with SECRET_KEY and CREW_PASSWORD set. The backend starts with production mode and one worker. Passenger and crew ports bind to localhost; terminate TLS at your ingress and restrict crew access to trusted staff.
 
-The initial crew account is created only in an empty users table. Provision bookings through a controlled administrative process using parameterized SQL against `/data/cabinops.db`: seat, flight_id (`APX-001`), booking_reference, passenger_name. No production booking records are generated automatically. Do not publish booking references.
+The initial crew account is created only in an empty users table. Provision bookings with `docker compose exec backend python scripts/manage.py booking --seat 22A --name "Passenger"`. The reference is requested privately. Rotate credentials with `docker compose exec backend python scripts/manage.py crew --username crew`. No production booking records are generated automatically. Do not publish booking references.
 
 Database state, including flight settings, is authoritative. JSON files are seed configuration, not a runtime control plane. Inventory currently belongs to the cabin deployment as a whole. Do not reuse this stack for multiple concurrent flights.
 

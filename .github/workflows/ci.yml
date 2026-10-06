@@ -16,7 +16,31 @@ jobs:
         env:
           TESTING: 'true'
       - run: python scripts/evaluate_parser.py
-      - run: docker build -t cabinops-api .
+      - run: docker compose up --build --wait --wait-timeout 120
+        env:
+          SECRET_KEY: ci-only-signing-key-not-for-real-deployment
+          CREW_PASSWORD: ci-only-crew-password
+      - name: Check production proxies and authentication
+        run: |
+          python - <<'PYCODE'
+          import json, urllib.request, urllib.error
+          for port in [5173, 5174]:
+              with urllib.request.urlopen(f'http://127.0.0.1:{port}/api/health') as response:
+                  assert json.load(response)['status'] == 'ok'
+              with urllib.request.urlopen(f'http://127.0.0.1:{port}/') as response:
+                  assert b'CabinOps' in response.read()
+          request = urllib.request.Request('http://127.0.0.1:5173/api/auth/passenger', data=json.dumps({'seat': '22A', 'booking_reference': 'DEMO'}).encode(), headers={'Content-Type': 'application/json'})
+          try:
+              urllib.request.urlopen(request)
+              raise AssertionError('Production DEMO login must be denied')
+          except urllib.error.HTTPError as error:
+              assert error.code == 401
+          PYCODE
+      - run: docker compose down
+        if: always()
+        env:
+          SECRET_KEY: ci-only-signing-key-not-for-real-deployment
+          CREW_PASSWORD: ci-only-crew-password
   frontend:
     runs-on: ubuntu-latest
     strategy:
