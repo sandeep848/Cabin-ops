@@ -1,5 +1,8 @@
 name: Cabin Atlas CI
 on: [push, pull_request]
+concurrency:
+  group: cabin-atlas-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
